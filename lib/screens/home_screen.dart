@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:retail_api/widgets/stock_update_items.dart';
 
+import '../widgets/main_drawer.dart';
+import '../styles/theme.dart' as Style;
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
@@ -23,12 +26,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override 
   Widget build(BuildContext context) {
+
     return Scaffold(
+      backgroundColor: Style.Colors.background,
+      key: _scaffoldKey,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(50.0),
         child: AppBar(
           elevation: 2.0,
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Color(0xFFFF9500),
           leading: IconButton(
             icon: Icon(
               EvaIcons.menu2Outline,
@@ -55,9 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: Center(
-        child: Text('Home Screen'),
-      )
+      drawer: MainDrawer(),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Transaction(),
+      ),
     );
   }
 }

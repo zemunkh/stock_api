@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:retail_api/screens/draft_screen.dart';
+import 'package:retail_api/screens/saved_record_screen.dart';
+import 'package:retail_api/screens/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './screens/activation_screen.dart';
@@ -49,6 +52,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (ctx) => activated ? HomeScreen() : ActivationScreen(),
         '/main': (ctx) => HomeScreen(),
+        SavedRecordScreen.routeName: (ctx) => SavedRecordScreen(),
+        DraftScreen.routeName: (ctx) => DraftScreen(),
+        SettingScreen.routeName: (ctx) => SettingScreen(),
       },
       onGenerateRoute: (settings) {
         print(settings.arguments);

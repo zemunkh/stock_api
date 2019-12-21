@@ -10,7 +10,7 @@ const apiCategory = {
 
 class Api {
   final HttpClient _httpClient = HttpClient();
-  final _url = 'flutter.udacity.com';
+  final _url = 'https://dev-api.qne.cloud/api/StockIns';
 
   Future<List> getUnits(String category) async {
     final uri = Uri.https(_url, '/$category');
@@ -54,3 +54,16 @@ class Api {
     }
   } 
 }
+
+
+
+    // "id": "b7c15a9f-1397-4d83-9873-244b7cdfb203",
+    // "stockInCode": "SIN1801/001",
+    // "stockInDate": "2018-01-30",
+    // "description": "Meng",
+    // "referenceNo": null,
+    // "title": null,
+    // "totalAmount": 943.4,
+    // "costCentre": null,
+    // "project": "Serdang",
+    // "stockLocation": "HQ"
