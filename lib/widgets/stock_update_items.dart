@@ -10,7 +10,13 @@ class Transaction extends StatefulWidget {
 class _TransactionState extends State<Transaction> {
 
   final _stockInputController = TextEditingController();
+  final _ctnInputController = TextEditingController();
+  final _pcsInputController = TextEditingController();
+
+
   FocusNode _stockInputNode = FocusNode();
+  FocusNode _ctnInputNode = FocusNode();
+  FocusNode _pcsInputNode = FocusNode();
 
   Future<Null> _focusNode(BuildContext context, FocusNode node) async {
     FocusScope.of(context).requestFocus(node);
@@ -39,7 +45,7 @@ class _TransactionState extends State<Transaction> {
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
-    String dropdownValue = 'One';
+    String dropdownValue = 'One from the world, you know it';
 
     Widget _stockInput(TextEditingController _controller, FocusNode _stockNode) {
       return Row(
@@ -64,10 +70,11 @@ class _TransactionState extends State<Transaction> {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.all(2.0),
-                  child: Center(
+                  child: Container(
+                    height: 50,
                     child: TextFormField(
                       style: TextStyle(
-                        fontSize: 16, 
+                        fontSize: 14, 
                         color: Color(0xFF004B83),
                         fontWeight: FontWeight.bold,
                       ),
@@ -146,7 +153,7 @@ class _TransactionState extends State<Transaction> {
                       dropdownValue = newValue;
                     });
                   },
-                  items: <String>['One', 'Two', 'Free', 'Four'].map<DropdownMenuItem<String>>((String value) {
+                  items: <String>['One from the world, you know it', 'Two', 'Free', 'Four'].map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
@@ -160,23 +167,170 @@ class _TransactionState extends State<Transaction> {
       );
     }
 
-    Widget dateTime(String time) {
-      return Text(
-        time,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: 'QuickSand',
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          color: Colors.black,
+    Widget statusBar(String time) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 2, right: 2),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              flex: 3,
+              child: Text(
+                time,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'QuickSand',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 7,
+              child: Text(
+                'System Auto: SIN191200',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontFamily: 'QuickSand',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
         ),
+      );
+    }
+
+    Widget _stockMeasurement(TextEditingController _ctnController, TextEditingController _pcsController, FocusNode _ctnNode, FocusNode _pcsNode) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.all(2.0),
+              child: Container(
+                height: 50,
+                child: TextFormField(
+                    style: TextStyle(
+                    fontSize: 14, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'CTN',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 32,
+                      ),
+                      onPressed: () {
+                        _clearTextController(context, _ctnController, _ctnNode);
+                      },
+                    ),
+                  ),
+                  autofocus: false,
+                  controller: _ctnController,
+                  focusNode: _ctnNode,
+                  onTap: () {
+                    _focusNode(context, _ctnNode);
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'CTN',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 20, 
+                color: Color(0xFF004B83),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Container(
+                height: 50,
+                child: TextFormField(
+                  style: TextStyle(
+                    fontSize: 14, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'PCS',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 32,
+                      ),
+                      onPressed: () {
+                        _clearTextController(context, _pcsController, _pcsNode);
+                      },
+                    ),
+                  ),
+                  autofocus: false,
+                  controller: _pcsController,
+                  focusNode: _pcsNode,
+                  onTap: () {
+                    _focusNode(context, _pcsNode);
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'PCS',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 20, 
+                color: Color(0xFF004B83),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     final transaction = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        dateTime(DateFormat("yyyy/MM/dd HH:mm:ss").format(createdDate)),
+        statusBar(DateFormat("yyyy/MM/dd HH:mm:ss").format(createdDate)),
         // descriptionMenu,
         // stockParameters,
         _descriptionMenu(context, 'Description:'),
@@ -184,8 +338,7 @@ class _TransactionState extends State<Transaction> {
 
         _stockInput(_stockInputController, _stockInputNode),
 
-        Text('Hello'),
-        Text('Hello'),
+        _stockMeasurement(_ctnInputController, _pcsInputController, _ctnInputNode, _pcsInputNode),
       ],
     );
 
