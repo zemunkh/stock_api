@@ -18,9 +18,15 @@ class SettingScreenState extends State<SettingScreen> {
 
   final _deviceController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _ipAddressController = TextEditingController();
+  final _portNumController = TextEditingController();
+  final _companyController = TextEditingController();
   
   FocusNode _deviceNode = FocusNode();
   FocusNode _usernameNode = FocusNode();
+  FocusNode _ipNode = FocusNode();
+  FocusNode _portNode = FocusNode();
+  FocusNode _compNode = FocusNode();
 
   List<TextEditingController> _descriptionControllers = new List();
   List<FocusNode> _descriptionFocusNodes = new List();
@@ -128,52 +134,48 @@ class SettingScreenState extends State<SettingScreen> {
           ),
           Expanded(
             flex: 6,
-            child: Stack(
-              alignment: Alignment(1.0, 1.0),
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Center(
-                    child: TextFormField(
-                      style: TextStyle(
-                        fontSize: 16, 
-                        color: Color(0xFF004B83),
-                        fontWeight: FontWeight.bold,
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Container(
+                height: 40,
+                child: TextFormField(
+                  style: TextStyle(
+                    fontSize: 16, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: header,
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 24,
                       ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: header,
-                        hintStyle: TextStyle(
-                          color: Color(0xFF004B83), 
-                          fontWeight: FontWeight.w200,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        errorStyle: TextStyle(
-                          color: Colors.yellowAccent,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(EvaIcons.close, 
-                            color: Colors.blueAccent, 
-                            size: 32,
-                          ),
-                          onPressed: () {
-                            _clearTextController(context, _mainController, _mainNode);
-                          },
-                        ),
-                      ),
-                      autofocus: false,
-                      controller: _mainController,
-                      focusNode: _mainNode,
-                      onTap: () {
-                        _focusNode(context, _mainNode);
+                      onPressed: () {
+                        _clearTextController(context, _mainController, _mainNode);
                       },
                     ),
                   ),
+                  autofocus: false,
+                  controller: _mainController,
+                  focusNode: _mainNode,
+                  onTap: () {
+                    _focusNode(context, _mainNode);
+                  },
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -190,9 +192,15 @@ class SettingScreenState extends State<SettingScreen> {
             List<String> _descripts = [];
             String dname = _deviceController.text;
             String uname = _usernameController.text;
+            String ip = _ipAddressController.text;
+            String port = _portNumController.text;
+            String company = _companyController.text;
             if(dname != '' && uname != '') {
               FileManager.saveProfile('device_name', dname).then((_){
                 FileManager.saveProfile('user_name',uname);
+                FileManager.saveProfile('ip_address', ip);
+                FileManager.saveProfile('port_number', port);
+                FileManager.saveProfile('compnay_name', company);
               });
               print('Saving now!');
               int i = 0;
@@ -276,20 +284,20 @@ class SettingScreenState extends State<SettingScreen> {
       );
     }
 
-  Widget buildContainer(Widget child) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(5)
-      ),
-      margin: EdgeInsets.all(5),
-      padding: EdgeInsets.all(5),
-      height: 450,
-      width: 400,
-      child: child,
-    );  
-  }
+    Widget buildContainer(Widget child) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(5)
+        ),
+        margin: EdgeInsets.all(5),
+        padding: EdgeInsets.all(5),
+        height: 450,
+        width: 400,
+        child: child,
+      );  
+    }
 
     Widget _descriptionInputList(BuildContext context) {
       return ListView.builder(
@@ -314,6 +322,9 @@ class SettingScreenState extends State<SettingScreen> {
       children: <Widget>[
         _mainInput('Device Name',_deviceController, _deviceNode),
         _mainInput('Username',_usernameController, _usernameNode),
+        _mainInput('IP address',_ipAddressController, _ipNode),
+        _mainInput('Port Num', _portNumController, _portNode),
+        _mainInput('Company Name', _companyController, _compNode),
         SizedBox(height: 15,),
 
         buildContainer(_descriptionInputList(context)),

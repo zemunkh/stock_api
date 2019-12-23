@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert' show json, utf8;
 import 'dart:io';
 
+import '../helper/file_manager.dart';
+
 
 const apiCategory = {
   'name': 'Currency',
@@ -10,6 +12,10 @@ const apiCategory = {
 
 class Api {
   final HttpClient _httpClient = HttpClient();
+  String ip = FileManager.readProfile('ip_address') as String;
+  String port = FileManager.readProfile('port_number') as String;
+  String companyName = FileManager.readProfile('compnay_name') as String;
+
   final _url = 'https://dev-api.qne.cloud/api/StockIns';
 
   Future<List> getUnits(String category) async {

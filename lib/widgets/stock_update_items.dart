@@ -208,6 +208,7 @@ class _TransactionState extends State<Transaction> {
                     setState(() {
                       dropdownValue = newValue;
                     });
+                    // Add some functions to handle change.
                   },
                   items: _descriptions.map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
