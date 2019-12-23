@@ -1,6 +1,7 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:retail_api/helper/file_manager.dart';
 
 class Transaction extends StatefulWidget {
   @override
@@ -18,6 +19,17 @@ class _TransactionState extends State<Transaction> {
   FocusNode _ctnInputNode = FocusNode();
   FocusNode _pcsInputNode = FocusNode();
 
+  List<String> _descriptions = [];
+  List<String> _descripts = [];
+  String dropdownValue = '';
+  // <String>['One from the world, you know it', 'Two', 'Free', 'Four']
+
+
+  Future<Null> _addButtonHandler(BuildContext context) async {
+    print('I am clicked!');
+    // run the api http request to the qne.cloud server
+  }
+
   Future<Null> _focusNode(BuildContext context, FocusNode node) async {
     FocusScope.of(context).requestFocus(node);
   }
@@ -31,6 +43,26 @@ class _TransactionState extends State<Transaction> {
     });
   }
 
+  Future<Null> setInitials() async {
+    _descripts = await FileManager.readDescriptions();
+    if(_descripts.isEmpty || _descripts == null) {
+      setState(() {
+        dropdownValue = 'Not Selected';
+      });
+      for(int i = 0; i < _descripts.length; i++) {
+        setState(() {
+          // _descriptionControllers[i].text = 'NaN';
+          _descriptions[i] = '#$i. Not Available';
+        });
+      }
+    } else {
+      setState(() {
+        dropdownValue = _descripts[0];
+        _descriptions = _descripts;
+      });
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -40,12 +72,36 @@ class _TransactionState extends State<Transaction> {
   @override
   void initState() {
     super.initState();
+    setInitials();
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
-    String dropdownValue = 'One from the world, you know it';
+    
+
+    final button = Center(
+      child: Padding(
+      padding: EdgeInsets.all(10),
+      child: MaterialButton(
+        onPressed: () {
+          _addButtonHandler(context);
+        },
+        child: Icon(
+          EvaIcons.plusCircleOutline,
+          color: Colors.white,
+          size: 40,
+        ),
+        shape: StadiumBorder(),
+        color: Colors.blue,
+        splashColor: Colors.teal,
+        height: 50,
+        minWidth: 50,
+        elevation: 2,
+      ),
+    ),
+
+      );
 
     Widget _stockInput(TextEditingController _controller, FocusNode _stockNode) {
       return Row(
@@ -95,7 +151,7 @@ class _TransactionState extends State<Transaction> {
                         suffixIcon: IconButton(
                           icon: Icon(EvaIcons.close, 
                             color: Colors.blueAccent, 
-                            size: 32,
+                            size: 24,
                           ),
                           onPressed: () {
                             _clearTextController(context, _controller, _stockNode);
@@ -153,7 +209,7 @@ class _TransactionState extends State<Transaction> {
                       dropdownValue = newValue;
                     });
                   },
-                  items: <String>['One from the world, you know it', 'Two', 'Free', 'Four'].map<DropdownMenuItem<String>>((String value) {
+                  items: _descriptions.map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
@@ -236,7 +292,7 @@ class _TransactionState extends State<Transaction> {
                     suffixIcon: IconButton(
                       icon: Icon(EvaIcons.close, 
                         color: Colors.blueAccent, 
-                        size: 32,
+                        size: 24,
                       ),
                       onPressed: () {
                         _clearTextController(context, _ctnController, _ctnNode);
@@ -294,7 +350,7 @@ class _TransactionState extends State<Transaction> {
                     suffixIcon: IconButton(
                       icon: Icon(EvaIcons.close, 
                         color: Colors.blueAccent, 
-                        size: 32,
+                        size: 24,
                       ),
                       onPressed: () {
                         _clearTextController(context, _pcsController, _pcsNode);
@@ -339,6 +395,8 @@ class _TransactionState extends State<Transaction> {
         _stockInput(_stockInputController, _stockInputNode),
 
         _stockMeasurement(_ctnInputController, _pcsInputController, _ctnInputNode, _pcsInputNode),
+
+        button,
       ],
     );
 

@@ -25,6 +25,7 @@ class SettingScreenState extends State<SettingScreen> {
   List<TextEditingController> _descriptionControllers = new List();
   List<FocusNode> _descriptionFocusNodes = new List();
 
+  List<String> _descriptions = [];
   bool lockEn = true;
 
 
@@ -45,13 +46,33 @@ class SettingScreenState extends State<SettingScreen> {
   Future<Null> setInitialValue() async {
     _usernameController.text = await FileManager.readProfile('user_name');
     _deviceController.text = await FileManager.readProfile('device_name');
-    // Initializing 8 types of description input models
+    _descriptions = await FileManager.readDescriptions();
+    List<String> parsed = [];
     for(int i = 0; i < 8; i++) {
       setState(() {
         _descriptionControllers.add(new TextEditingController());
         _descriptionFocusNodes.add(new FocusNode());
       });
     }
+    if(_descriptions.isEmpty || _descriptions == null) {
+      for(int i = 0; i < _descriptionControllers.length; i++) {
+        setState(() {
+          _descriptionControllers[i].text = 'Unknown';
+        });
+      }
+    } else {
+      for(int i = 0; i < _descriptionControllers.length; i++) {
+        setState(() {
+          if(_descriptions[i] != '') {
+            parsed = _descriptions[i].split('. ');
+            _descriptionControllers[i].text = parsed[1]; 
+          } else {
+            _descriptionControllers[i].text = 'Unknown'; 
+          }
+        });
+      }
+    }
+    // Initializing 8 types of description input models
   }
 
   @override
@@ -166,6 +187,7 @@ class SettingScreenState extends State<SettingScreen> {
         child: MaterialButton(
           onPressed: () {
             print('You pressed Save!');
+            List<String> _descripts = [];
             String dname = _deviceController.text;
             String uname = _usernameController.text;
             if(dname != '' && uname != '') {
@@ -173,10 +195,22 @@ class SettingScreenState extends State<SettingScreen> {
                 FileManager.saveProfile('user_name',uname);
               });
               print('Saving now!');
-              _scaffoldKey.currentState.showSnackBar(SnackBar(
-                content: new Text("User data is saved successfully!", textAlign: TextAlign.center,),
-                duration: const Duration(milliseconds: 2000)
-              ));
+              int i = 0;
+              for (TextEditingController dController in _descriptionControllers) {
+                i++;
+                if(dController.text != '' || dController.text != null) {
+                  _descripts.add('$i. ${dController.text}');
+                } else {
+                  _descripts.add('$i. Unknown');
+                }
+                print('HOho: ${dController.text}'); 
+              }
+              FileManager.setDescriptionList(_descripts).then((_){
+                _scaffoldKey.currentState.showSnackBar(SnackBar(
+                  content: new Text("User data is saved successfully!", textAlign: TextAlign.center,),
+                  duration: const Duration(milliseconds: 2000)
+                ));
+              });
             }
             else {
               print('Dismissing it now!');

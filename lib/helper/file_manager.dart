@@ -23,13 +23,6 @@ class FileManager {
     print('Files List: $files');
   }
 
-  static void saveDispatchData(String _createdAt, List<String> _valuesList) {
-
-    writeToDispatchCsv(_createdAt, _valuesList).then((_){
-      _saveFilename('dispatch_files', 'dispatch_$_createdAt.csv');
-    });
-  }
-
   static void saveScanData(String masterCode, String productCode, int counter, bool matched, DateTime currentDate, String userName, String deviceName) {
     String filename = '${DateFormat("yyyyMMdd").format(currentDate)}';
     String time = DateFormat("yyyy/MM/dd HH:mm:ss").format(currentDate);
@@ -70,18 +63,6 @@ class FileManager {
 
     String content = file.readAsStringSync();
     file.writeAsStringSync(content + newData);
-    print(content);
-  }
-
-  static Future<Null> writeToDispatchCsv(String createdAt, List<String> _valuesList) async {
-    final file = await getCsvFile('$createdAt');
-    String content = '';
-    String newLine = '';
-    for(int i = 0; i < _valuesList.length; i++){
-      content = file.readAsStringSync();
-      newLine = _valuesList[i];
-      file.writeAsStringSync(content + newLine);
-    }
     print(content);
   }
 
@@ -139,6 +120,34 @@ class FileManager {
     }
     print('Draft List: $drafts');
     return drafts;
+  } 
+
+
+  static Future<List> readDescriptions() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> descripts = prefs.getStringList('stock_descriptions');
+    print('Descriptions List: $descripts');
+    if(descripts == null) {
+      descripts = [];
+      return null;
+    } else {
+      return descripts;
+    }
+  }
+  // Think again.
+  static Future<Null> setDescriptionList(List<String> descriptions) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> descripts = prefs.getStringList('stock_descriptions');
+    if(descripts == null || descripts.isEmpty) {
+      descripts = descriptions;
+      print('Initializing the descriptions');
+      prefs.setStringList('stock_descriptions', descripts);
+    } else {
+      print('Overwriting the descriptions');
+      prefs.setStringList('stock_descriptions', descriptions);
+    }
+    print('Descriptions List: $descriptions');
+    return null;
   }
 
   static Future<Null> setSelectedIndex(int index) async {
@@ -162,6 +171,7 @@ class FileManager {
     print('Draft Bank: $drafts');
     return drafts;
   }
+
   static Future<List> removeFromBank(int index) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'draft_bank';
@@ -172,6 +182,5 @@ class FileManager {
     }
     print('Draft List: $drafts');
   }
-
 
 }
