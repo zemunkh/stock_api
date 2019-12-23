@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert' show json, utf8;
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import '../helper/file_manager.dart';
 
 
@@ -12,14 +13,26 @@ const apiCategory = {
 
 class Api {
   final HttpClient _httpClient = HttpClient();
-  String ip = FileManager.readProfile('ip_address') as String;
-  String port = FileManager.readProfile('port_number') as String;
-  String companyName = FileManager.readProfile('compnay_name') as String;
+
+  // String ip = FileManager.readProfile('ip_address') as String;
+  // String port = FileManager.readProfile('port_number') as String;
+  // String companyName = FileManager.readProfile('company_name') as String;
 
   final _url = 'https://dev-api.qne.cloud/api/StockIns';
 
-  Future<List> getUnits(String category) async {
-    final uri = Uri.https(_url, '/$category');
+  Future<String> getStocks(String dbCode) async {
+    http.Response response = await http.get(
+      Uri.encodeFull(_url),
+      headers: {
+        "DbCode": dbCode,
+        "Content-Type": "application/json"
+      },
+    );
+    return response.body;
+  }
+
+  Future<List> getUnits(String stockNum) async {
+    final uri = Uri.https(_url, '/$stockNum');
     final jsonResponse = await _getJson(uri);
     if(jsonResponse == null || jsonResponse['units'] == null) {
       print('Error retrieving units.');

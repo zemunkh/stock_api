@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:retail_api/helper/api.dart';
 import 'package:retail_api/helper/file_manager.dart';
 
 class Transaction extends StatefulWidget {
@@ -27,6 +30,16 @@ class _TransactionState extends State<Transaction> {
 
   Future<Null> _addButtonHandler(BuildContext context) async {
     print('I am clicked!');
+    final api = Api();
+    String data = await api.getStocks('OUCOP7');
+    List receivedData = json.decode(data);
+    for(int i = 0; i < receivedData.length; i++) {
+      print('Fetched data: ${receivedData[i]["details"]}');
+    }
+    setState(() {
+      _stockInputController.text = receivedData[0]["stockInCode"];
+      _pcsInputController.text = receivedData[0]["UOM"].toString();
+    });
     // run the api http request to the qne.cloud server
   }
 
