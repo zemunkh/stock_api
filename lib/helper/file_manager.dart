@@ -93,6 +93,9 @@ class FileManager {
   static Future<String> readProfile(String key) async {
     final prefs = await SharedPreferences.getInstance();
     String profile = prefs.getString(key);
+    if(profile == null) {
+      return 'Empty';
+    }
     return profile;
   }
 

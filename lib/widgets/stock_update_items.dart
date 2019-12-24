@@ -17,10 +17,20 @@ class _TransactionState extends State<Transaction> {
   final _ctnInputController = TextEditingController();
   final _pcsInputController = TextEditingController();
 
-
   FocusNode _stockInputNode = FocusNode();
   FocusNode _ctnInputNode = FocusNode();
   FocusNode _pcsInputNode = FocusNode();
+
+  // List<TextEditingController> _stockInputController = new List();
+  // List<TextEditingController> _ctnInputController = new List();
+  // List<TextEditingController> _pcsInputController = new List();
+
+  // List<FocusNode> _stockInputNode = new List();
+  // List<FocusNode> _ctnInputNode = new List();
+  // List<FocusNode> _pcsInputNode = new List();
+
+  List<Widget> _children = [];
+  int _count = 0;
 
   List<String> _descriptions = [];
   List<String> _descripts = [];
@@ -30,15 +40,23 @@ class _TransactionState extends State<Transaction> {
 
   Future<Null> _addButtonHandler(BuildContext context) async {
     print('I am clicked!');
-    final api = Api();
-    String data = await api.getStocks('OUCOP7');
-    List receivedData = json.decode(data);
-    for(int i = 0; i < receivedData.length; i++) {
-      print('Fetched data: ${receivedData[i]["details"]}');
-    }
+    // final api = Api();
+    // String data = await api.getStocks('OUCOP7');
+    // List receivedData = json.decode(data);
+    // for(int i = 0; i < receivedData.length; i++) {
+    //   print('Fetched data: ${receivedData[i]["details"]}');
+    // }
+    // setState(() {
+    //   _stockInputController.text = receivedData[0]["stockInCode"];
+    //   _pcsInputController.text = receivedData[0]["UOM"].toString();
+    // });
+
+    _children = List.from(_children)
+      ..add(TextFormField(
+        decoration: InputDecoration(hintText: 'Text Field is added $_count'),
+      ));
     setState(() {
-      _stockInputController.text = receivedData[0]["stockInCode"];
-      _pcsInputController.text = receivedData[0]["UOM"].toString();
+      ++_count;
     });
     // run the api http request to the qne.cloud server
   }
@@ -397,6 +415,21 @@ class _TransactionState extends State<Transaction> {
       );
     }
 
+    Widget buildContainer(Widget child) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(5)
+        ),
+        margin: EdgeInsets.all(5),
+        padding: EdgeInsets.all(5),
+        height: 450,
+        width: 400,
+        child: child,
+      );  
+    }
+
     final transaction = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -409,6 +442,8 @@ class _TransactionState extends State<Transaction> {
         _stockInput(_stockInputController, _stockInputNode),
 
         _stockMeasurement(_ctnInputController, _pcsInputController, _ctnInputNode, _pcsInputNode),
+        
+        buildContainer(ListView(children: _children),),
 
         button,
       ],

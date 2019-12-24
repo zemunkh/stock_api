@@ -1,5 +1,7 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
+import '../widgets/main_drawer.dart';
+import '../styles/theme.dart' as Style;
 
 class SavedRecordScreen extends StatelessWidget {
   static const routeName = '/record';
@@ -9,16 +11,9 @@ class SavedRecordScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Record Page'),
-        leading: IconButton(
-          icon: Icon(
-            EvaIcons.arrowBack,
-          ),
-          color: Colors.white,
-          onPressed: (){
-            Navigator.of(context).pop();
-          },
-        ),
+        backgroundColor: Style.Colors.mainAppBar,
       ),
+      drawer: MainDrawer(),
       body: Center(
         child: Text('Hi Record!'),
       ),

@@ -21,12 +21,14 @@ class SettingScreenState extends State<SettingScreen> {
   final _ipAddressController = TextEditingController();
   final _portNumController = TextEditingController();
   final _companyController = TextEditingController();
+  final _locationController = TextEditingController();
   
   FocusNode _deviceNode = FocusNode();
   FocusNode _usernameNode = FocusNode();
   FocusNode _ipNode = FocusNode();
   FocusNode _portNode = FocusNode();
   FocusNode _compNode = FocusNode();
+  FocusNode _locNode = FocusNode();
 
   List<TextEditingController> _descriptionControllers = new List();
   List<FocusNode> _descriptionFocusNodes = new List();
@@ -52,6 +54,10 @@ class SettingScreenState extends State<SettingScreen> {
   Future<Null> setInitialValue() async {
     _usernameController.text = await FileManager.readProfile('user_name');
     _deviceController.text = await FileManager.readProfile('device_name');
+    _ipAddressController.text = await FileManager.readProfile('ip_address');
+    _portNumController.text = await FileManager.readProfile('port_number');
+    _companyController.text = await FileManager.readProfile('company_name');
+    _locationController.text = await FileManager.readProfile('location');
     _descriptions = await FileManager.readDescriptions();
     List<String> parsed = [];
     for(int i = 0; i < 8; i++) {
@@ -169,6 +175,7 @@ class SettingScreenState extends State<SettingScreen> {
                     ),
                   ),
                   autofocus: false,
+                  autocorrect: false,
                   controller: _mainController,
                   focusNode: _mainNode,
                   onTap: () {
@@ -195,12 +202,14 @@ class SettingScreenState extends State<SettingScreen> {
             String ip = _ipAddressController.text;
             String port = _portNumController.text;
             String company = _companyController.text;
+            String location = _locationController.text;
             if(dname != '' && uname != '') {
               FileManager.saveProfile('device_name', dname).then((_){
                 FileManager.saveProfile('user_name',uname);
                 FileManager.saveProfile('ip_address', ip);
                 FileManager.saveProfile('port_number', port);
-                FileManager.saveProfile('compnay_name', company);
+                FileManager.saveProfile('company_name', company);
+                FileManager.saveProfile('location', location);
               });
               print('Saving now!');
               int i = 0;
@@ -324,7 +333,8 @@ class SettingScreenState extends State<SettingScreen> {
         _mainInput('Username',_usernameController, _usernameNode),
         _mainInput('IP address',_ipAddressController, _ipNode),
         _mainInput('Port Num', _portNumController, _portNode),
-        _mainInput('Company Name', _companyController, _compNode),
+        _mainInput('Company', _companyController, _compNode),
+        _mainInput('Location', _locationController, _locNode),
         SizedBox(height: 15,),
 
         buildContainer(_descriptionInputList(context)),

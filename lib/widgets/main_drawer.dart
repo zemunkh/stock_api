@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:retail_api/screens/update_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/saved_record_screen.dart';
 import '../screens/draft_screen.dart';
@@ -82,6 +83,16 @@ class MainDrawer extends StatelessWidget {
                 Navigator.of(context).pushReplacementNamed(SettingScreen.routeName);
               }
             ),
+
+            new Divider(height: 15.0,color: Colors.black87,),
+
+            buildListTile(
+              'Update StockIns', 
+              EvaIcons.syncOutline,
+              () {
+                Navigator.of(context).pushReplacementNamed(UpdateStockScreen.routeName);
+              }  
+            )
           ],
         ),
       ),
