@@ -152,6 +152,20 @@ class FileManager {
     return null;
   }
 
+  static Future<Null> setStockLength(int len) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('stock_length', len);
+    return null;
+  }
+  static Future<int> getStockLength() async {
+    final prefs = await SharedPreferences.getInstance();
+    int len = prefs.getInt('stock_length');
+    if(len == null) {
+      return 0;
+    }
+    return len;
+  }
+
   static Future<Null> setSelectedIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('draft_selected', index);

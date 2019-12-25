@@ -14,13 +14,10 @@ const apiCategory = {
 class Api {
   final HttpClient _httpClient = HttpClient();
 
-  // String ip = FileManager.readProfile('ip_address') as String;
-  // String port = FileManager.readProfile('port_number') as String;
-  // String companyName = FileManager.readProfile('company_name') as String;
 
-  final _url = 'https://dev-api.qne.cloud/api/StockIns';
-
-  Future<String> getStocks(String dbCode) async {
+  // final _url = 'http://$ip:$port/api/Stocks';
+  Future<String> getStocks(String dbCode, String _url) async {
+    print("Accessing URL: $_url");
     http.Response response = await http.get(
       Uri.encodeFull(_url),
       headers: {
@@ -32,7 +29,7 @@ class Api {
   }
 
   Future<List> getUnits(String stockNum) async {
-    final uri = Uri.https(_url, '/$stockNum');
+    final uri = Uri.https('http://qne.cloud/api/StockIns', '/$stockNum');
     final jsonResponse = await _getJson(uri);
     if(jsonResponse == null || jsonResponse['units'] == null) {
       print('Error retrieving units.');
@@ -41,20 +38,20 @@ class Api {
     return jsonResponse['units'];
   }
 
-  Future<double> convert(String category, String amount, String fromUnit, String toUnit) async {
-    final uri = Uri.https(_url, '/$category/convert',
-    {'amount': amount, 'from': fromUnit, 'to': toUnit});
+  // Future<double> convert(String category, String amount, String fromUnit, String toUnit) async {
+  //   final uri = Uri.https(_url, '/$category/convert',
+  //   {'amount': amount, 'from': fromUnit, 'to': toUnit});
 
-    final jsonResponse = await _getJson(uri);
-    if (jsonResponse == null || jsonResponse['status'] == null) {
-      print('Error Retrieving conversion.');
-      return null;
-    } else if (jsonResponse['status'] == 'error') {
-      print(jsonResponse['message']);
-      return null;
-    }
-    return jsonResponse['conversion'].toDouble();
-  }
+  //   final jsonResponse = await _getJson(uri);
+  //   if (jsonResponse == null || jsonResponse['status'] == null) {
+  //     print('Error Retrieving conversion.');
+  //     return null;
+  //   } else if (jsonResponse['status'] == 'error') {
+  //     print(jsonResponse['message']);
+  //     return null;
+  //   }
+  //   return jsonResponse['conversion'].toDouble();
+  // }
 
   Future<Map<String, dynamic>> _getJson (Uri uri) async {
     try {

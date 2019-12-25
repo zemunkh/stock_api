@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:retail_api/helper/api.dart';
-import 'package:retail_api/helper/file_manager.dart';
+import '../helper/api.dart';
+import '../helper/database_helper.dart';
+import '../helper/file_manager.dart';
 
 class Transaction extends StatefulWidget {
   @override
@@ -12,7 +13,8 @@ class Transaction extends StatefulWidget {
 }
 
 class _TransactionState extends State<Transaction> {
-
+  final dbHelper = DatabaseHelper.instance;
+  
   final _stockInputController = TextEditingController();
   final _ctnInputController = TextEditingController();
   final _pcsInputController = TextEditingController();
@@ -35,8 +37,44 @@ class _TransactionState extends State<Transaction> {
   List<String> _descriptions = [];
   List<String> _descripts = [];
   String dropdownValue = '';
+  String buffer = '';
+  String trueVal = '';
   // <String>['One from the world, you know it', 'Two', 'Free', 'Four']
 
+  Future<Null> _searchStockCode(String stockCode) async {
+
+    List<Map> stockData = await dbHelper.queryAllRows();
+
+    stockData.forEach((row){
+      if(row["stockCode"] == stockCode) {
+        print('ID: ${row["id"]}');
+        int id = row["id"];
+        _ctnInputController.text = row["baseUOM"];
+        _pcsInputController.text = row["baseUOM"];
+      }
+    });
+
+  }
+
+  Future<Null> stockInListener() async {
+    buffer = _stockInputController.text;
+    if(buffer.endsWith(r'$')) {
+      buffer = buffer.substring(0, buffer.length - 1);
+      trueVal = buffer;
+
+
+      await Future.delayed(const Duration(milliseconds: 1000), (){
+        _stockInputController.text = trueVal;
+      }).then((value){
+        _searchStockCode(trueVal);
+        Future.delayed(const Duration(milliseconds: 500), (){
+          // _stockInputController.clear();
+          _stockInputNode.unfocus();
+          FocusScope.of(context).requestFocus(new FocusNode());
+        });
+      });
+    }
+  }
 
   Future<Null> _addButtonHandler(BuildContext context) async {
     print('I am clicked!');
@@ -103,6 +141,7 @@ class _TransactionState extends State<Transaction> {
   @override
   void initState() {
     super.initState();
+    _stockInputController.addListener(stockInListener);
     setInitials();
   }
 
@@ -126,8 +165,8 @@ class _TransactionState extends State<Transaction> {
         shape: StadiumBorder(),
         color: Colors.blue,
         splashColor: Colors.teal,
-        height: 50,
-        minWidth: 50,
+        height: 40,
+        minWidth: 40,
         elevation: 2,
       ),
     ),
@@ -152,53 +191,48 @@ class _TransactionState extends State<Transaction> {
           ),
           Expanded(
             flex: 6,
-            child: Stack(
-              alignment: Alignment(1.0, 1.0),
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Container(
-                    height: 50,
-                    child: TextFormField(
-                      style: TextStyle(
-                        fontSize: 14, 
-                        color: Color(0xFF004B83),
-                        fontWeight: FontWeight.bold,
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Container(
+                height: 60,
+                child: TextFormField(
+                  style: TextStyle(
+                    fontSize: 14, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'Stock code',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 24,
                       ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Stock code',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF004B83), 
-                          fontWeight: FontWeight.w200,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        errorStyle: TextStyle(
-                          color: Colors.yellowAccent,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(EvaIcons.close, 
-                            color: Colors.blueAccent, 
-                            size: 24,
-                          ),
-                          onPressed: () {
-                            _clearTextController(context, _controller, _stockNode);
-                          },
-                        ),
-                      ),
-                      autofocus: false,
-                      controller: _controller,
-                      focusNode: _stockNode,
-                      onTap: () {
-                        _focusNode(context, _stockNode);
+                      onPressed: () {
+                        _clearTextController(context, _controller, _stockNode);
                       },
                     ),
                   ),
+                  autofocus: false,
+                  controller: _controller,
+                  focusNode: _stockNode,
+                  onTap: () {
+                    _focusNode(context, _stockNode);
+                  },
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -296,14 +330,14 @@ class _TransactionState extends State<Transaction> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Expanded(
-            flex: 3,
+            flex: 4,
             child: Padding(
               padding: EdgeInsets.all(2.0),
               child: Container(
-                height: 50,
+                height: 60,
                 child: TextFormField(
                     style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 12, 
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -324,7 +358,7 @@ class _TransactionState extends State<Transaction> {
                     suffixIcon: IconButton(
                       icon: Icon(EvaIcons.close, 
                         color: Colors.blueAccent, 
-                        size: 24,
+                        size: 16,
                       ),
                       onPressed: () {
                         _clearTextController(context, _ctnController, _ctnNode);
@@ -342,7 +376,7 @@ class _TransactionState extends State<Transaction> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Text(
               'CTN',
               textAlign: TextAlign.left,
@@ -354,14 +388,14 @@ class _TransactionState extends State<Transaction> {
             ),
           ),
           Expanded(
-            flex: 3,
+            flex: 4,
             child: Padding(
               padding: const EdgeInsets.all(2.0),
               child: Container(
-                height: 50,
+                height: 60,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 12, 
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -382,7 +416,7 @@ class _TransactionState extends State<Transaction> {
                     suffixIcon: IconButton(
                       icon: Icon(EvaIcons.close, 
                         color: Colors.blueAccent, 
-                        size: 24,
+                        size: 16,
                       ),
                       onPressed: () {
                         _clearTextController(context, _pcsController, _pcsNode);
@@ -400,7 +434,7 @@ class _TransactionState extends State<Transaction> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Text(
               'PCS',
               textAlign: TextAlign.left,

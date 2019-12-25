@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
-import 'package:retail_api/screens/update_screen.dart';
+import 'package:retail_api/screens/import_stocks_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/saved_record_screen.dart';
 import '../screens/draft_screen.dart';
@@ -90,7 +90,7 @@ class MainDrawer extends StatelessWidget {
               'Update StockIns', 
               EvaIcons.syncOutline,
               () {
-                Navigator.of(context).pushReplacementNamed(UpdateStockScreen.routeName);
+                Navigator.of(context).pushReplacementNamed(ImportStocksScreen.routeName);
               }  
             )
           ],
