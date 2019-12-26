@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../helper/api.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
 
@@ -15,28 +12,18 @@ class Transaction extends StatefulWidget {
 class _TransactionState extends State<Transaction> {
   final dbHelper = DatabaseHelper.instance;
   
-  final _stockInputController = TextEditingController();
-  final _ctnInputController = TextEditingController();
-  final _pcsInputController = TextEditingController();
-
-  FocusNode _stockInputNode = FocusNode();
-  FocusNode _ctnInputNode = FocusNode();
-  FocusNode _pcsInputNode = FocusNode();
-
   List<TextEditingController> _stockInputControllers = new List();
-  List<TextEditingController> _lvl1InputController = new List();
-  List<TextEditingController> _lvl2InputController = new List();
+  List<TextEditingController> _lvl1InputControllers = new List();
+  List<TextEditingController> _lvl2InputControllers = new List();
 
   List<FocusNode> _stockInputNodes = new List();
-  List<FocusNode> _lvl1InputNode = new List();
-  List<FocusNode> _lvl2InputNode = new List();
+  List<FocusNode> _lvl1InputNodes = new List();
+  List<FocusNode> _lvl2InputNodes = new List();
 
   List<String> _baseUOMs = [];
   List<String> _stockNames = [];
 
-  List<Widget> _children = [];
-  int _count = 0;
-
+  // Dropdown menu variables
   List<String> _descriptions = [];
   List<String> _descripts = [];
   String dropdownValue = '';
@@ -44,7 +31,7 @@ class _TransactionState extends State<Transaction> {
   String trueVal = '';
   // <String>['One from the world, you know it', 'Two', 'Free', 'Four']
 
-  Future<Null> _searchStockCode(String stockCode) async {
+  Future<Null> _searchStockCode(int index, String stockCode) async {
 
     List<Map> stockData = await dbHelper.queryAllRows();
 
@@ -52,45 +39,41 @@ class _TransactionState extends State<Transaction> {
       if(row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         int id = row["id"];
-        _stockNames.add(row["stockName"]);
-        _baseUOMs.add(row["baseUOM"]);
-        _ctnInputController.text = row["baseUOM"];
-        _pcsInputController.text = row["baseUOM"];
+        _stockNames[index] = (row["stockName"]);
+        _baseUOMs[index] = (row["baseUOM"]);
 
+        // _lvl1InputControllers[index].text = row["baseUOM"];
+        
         // this will build baseUOM lvl1, lvl2 widgets
       }
     });
 
   }
 
-  Future<Null> stockInListener() async {
-    buffer = _stockInputController.text;
-    if(buffer.endsWith(r'$')) {
-      buffer = buffer.substring(0, buffer.length - 1);
-      trueVal = buffer;
-
-
-      await Future.delayed(const Duration(milliseconds: 1000), (){
-        _stockInputController.text = trueVal;
-      }).then((value){
-        _searchStockCode(trueVal);
-        Future.delayed(const Duration(milliseconds: 500), (){
-          // _stockInputController.clear();
-          _stockInputNode.unfocus();
-          FocusScope.of(context).requestFocus(new FocusNode());
-        });
-      });
-    }
-  }
   
-  _controllerEventListener(int index, TextEditingController _controller, String _typeController) {
+  Future<Null> _stockInEventListener(int index, TextEditingController _controller) async {
     int length = _stockInputControllers.length;
 
     print('Length of the controllers: $length, index: $index');
 
     buffer = _controller.text;
 
-    // Something to do with UOMs
+    if(buffer.endsWith(r'$')) {
+      buffer = buffer.substring(0, buffer.length - 1);
+      trueVal = buffer;
+
+
+      await Future.delayed(const Duration(milliseconds: 1000), (){
+        _stockInputControllers[index].text = trueVal;
+      }).then((value){
+        _searchStockCode(index, trueVal);
+        Future.delayed(const Duration(milliseconds: 500), (){
+          // _stockInputController.clear();
+          _stockInputNodes[index].unfocus();
+          FocusScope.of(context).requestFocus(new FocusNode());
+        });
+      });
+    }
 
   }
 
@@ -106,6 +89,31 @@ class _TransactionState extends State<Transaction> {
       FocusScope.of(context).requestFocus(node);
     });
   }
+
+
+  Future<bool> _postTransaction() {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Do you want to upload the transactions?"),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Yes'),
+            onPressed: () {
+              print('Yes clicked');
+            },
+          ),
+          FlatButton(
+            child: Text('No'),
+            onPressed: () {
+              print('No clicked');
+            },
+          ),
+        ],
+      )
+    );
+  }
+
 
   Future<Null> setInitials() async {
     _descripts = await FileManager.readDescriptions();
@@ -125,18 +133,28 @@ class _TransactionState extends State<Transaction> {
         _descriptions = _descripts;
       });
     }
+
+    setState(() {
+      _baseUOMs.add('Unit');
+      _stockNames.add('StockCode');
+      _stockInputControllers.add(new TextEditingController());
+      _lvl1InputControllers.add(new TextEditingController());
+      _lvl2InputControllers.add(new TextEditingController());
+
+      _stockInputNodes.add(new FocusNode());
+      _lvl1InputNodes.add(new FocusNode());
+      _lvl2InputNodes.add(new FocusNode());
+    });
   }
 
   @override
   void dispose() {
     super.dispose();
-    _stockInputController.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _stockInputController.addListener(stockInListener);
     setInitials();
   }
 
@@ -144,26 +162,60 @@ class _TransactionState extends State<Transaction> {
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
     
-    Widget _stockMeasurement(TextEditingController _ctnController, TextEditingController _pcsController, FocusNode _ctnNode, FocusNode _pcsNode) {
+    Widget deleteRowButton(int index) {
+      return Padding(
+        padding: EdgeInsets.all(5),
+        child: MaterialButton(
+          onPressed: () {
+            // delete current row
+            print("Clicked row index: $index");
+            setState(() {
+            _baseUOMs.removeAt(index);
+            _stockNames.removeAt(index);
+            _stockInputControllers.removeAt(index);
+            _lvl1InputControllers.removeAt(index);
+            _lvl2InputControllers.removeAt(index);
+
+            _stockInputNodes.removeAt(index);
+            _lvl1InputNodes.removeAt(index);
+            _lvl2InputNodes.removeAt(index);
+          });
+          },
+          child: Icon(
+            Icons.delete,
+            color: Colors.red,
+            size: 30,
+          ),
+          // shape: StadiumBorder(),
+          // color: Colors.teal[300],
+          splashColor: Colors.grey,
+          // height: 50,
+          // minWidth: 250,
+          elevation: 2,
+        ),
+      );
+    } 
+
+    Widget _stockMeasurement(int index, TextEditingController _lvl1Controller, TextEditingController _lvl2Controller, FocusNode _lvl1Node, FocusNode _lvl2Node) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Padding(
               padding: EdgeInsets.all(2.0),
               child: Container(
-                height: 60,
+                height: 40,
                 child: TextFormField(
                     style: TextStyle(
                     fontSize: 12, 
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: InputDecoration(
+                  decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'CTN',
+                    hintText: _baseUOMs[index],
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -171,24 +223,13 @@ class _TransactionState extends State<Transaction> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
-                    errorStyle: TextStyle(
-                      color: Colors.yellowAccent,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
-                        size: 16,
-                      ),
-                      onPressed: () {
-                        _clearTextController(context, _ctnController, _ctnNode);
-                      },
-                    ),
                   ),
                   autofocus: false,
-                  controller: _ctnController,
-                  focusNode: _ctnNode,
+                  controller: _lvl1Controller,
+                  focusNode: _lvl1Node,
                   onTap: () {
-                    _focusNode(context, _ctnNode);
+                    _focusNode(context, _lvl1Node);
+                    // _clearTextController(context, _lvl1Controller, _lvl1Node);
                   },
                 ),
               ),
@@ -197,31 +238,31 @@ class _TransactionState extends State<Transaction> {
           Expanded(
             flex: 1,
             child: Text(
-              'CTN',
+              _baseUOMs[index],
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 16, 
+                fontSize: 14, 
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Padding(
               padding: const EdgeInsets.all(2.0),
               child: Container(
-                height: 60,
+                height: 40,
                 child: TextFormField(
                   style: TextStyle(
                     fontSize: 12, 
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: InputDecoration(
+                  decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'pcs',
+                    hintText:_baseUOMs[index],
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -229,24 +270,13 @@ class _TransactionState extends State<Transaction> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
-                    errorStyle: TextStyle(
-                      color: Colors.yellowAccent,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
-                        size: 16,
-                      ),
-                      onPressed: () {
-                        _clearTextController(context, _pcsController, _pcsNode);
-                      },
-                    ),
                   ),
                   autofocus: false,
-                  controller: _pcsController,
-                  focusNode: _pcsNode,
+                  controller: _lvl2Controller,
+                  focusNode: _lvl2Node,
                   onTap: () {
-                    _focusNode(context, _pcsNode);
+                    _focusNode(context, _lvl2Node);
+                    // _clearTextController(context, _lvl2Controller, _lvl2Node);
                   },
                 ),
               ),
@@ -255,87 +285,45 @@ class _TransactionState extends State<Transaction> {
           Expanded(
             flex: 1,
             child: Text(
-              'pcs',
+              _baseUOMs[index],
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 16, 
+                fontSize: 14, 
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
+          Expanded(
+            flex: 2,
+            child: deleteRowButton(index),
+          )
         ],
       );
     }
-
-    // Widget _stockInput(TextEditingController _controller, FocusNode _stockNode) {
-    //   return Padding(
-    //     padding: const EdgeInsets.all(2.0),
-    //     child: Container(
-    //       height: 60,
-    //       child: TextFormField(
-    //         style: TextStyle(
-    //           fontSize: 14, 
-    //           color: Color(0xFF004B83),
-    //           fontWeight: FontWeight.bold,
-    //         ),
-    //         decoration: InputDecoration(
-    //           filled: true,
-    //           fillColor: Colors.white,
-    //           hintText: 'Stock code',
-    //           hintStyle: TextStyle(
-    //             color: Color(0xFF004B83), 
-    //             fontWeight: FontWeight.w200,
-    //           ),
-    //           border: OutlineInputBorder(
-    //             borderRadius: BorderRadius.circular(5.0),
-    //           ),
-    //           errorStyle: TextStyle(
-    //             color: Colors.yellowAccent,
-    //           ),
-    //           suffixIcon: IconButton(
-    //             icon: Icon(EvaIcons.close, 
-    //               color: Colors.blueAccent, 
-    //               size: 24,
-    //             ),
-    //             onPressed: () {
-    //               _clearTextController(context, _controller, _stockNode);
-    //             },
-    //           ),
-    //         ),
-    //         autofocus: false,
-    //         controller: _controller,
-    //         focusNode: _stockNode,
-    //         onTap: () {
-    //           _focusNode(context, _stockNode);
-    //         },
-    //       ),
-    //     ),
-    //   );
-    // }
     
     Widget _stockInput(int index, TextEditingController _controller, FocusNode _stockNode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Expanded(
-            flex: 4,
+            flex: 2,
             child: Text(
-              'Stock In: $index',
+              'StockIn: ${index + 1}',
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 20, 
+                fontSize: 14, 
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
             )
           ),
           Expanded(
-            flex: 6,
+            flex: 8,
             child: Padding(
               padding: const EdgeInsets.all(2.0),
               child: Container(
-                height: 60,
+                height: 40,
                 child: TextFormField(
                   style: TextStyle(
                     fontSize: 14, 
@@ -373,7 +361,7 @@ class _TransactionState extends State<Transaction> {
                     _focusNode(context, _stockNode);
                   },
                   onChanged: (value) {
-                    _controllerEventListener(index, _controller);
+                    _stockInEventListener(index, _controller);
                   },
                 ),
               ),
@@ -383,52 +371,61 @@ class _TransactionState extends State<Transaction> {
       );
     }
 
-    final button = Center(
+    final addStockInputButton = Center(
       child: Padding(
         padding: EdgeInsets.all(10),
         child: MaterialButton(
           onPressed: () {
             setState(() {
               _baseUOMs.add('');
+              _stockNames.add('');
               _stockInputControllers.add(new TextEditingController());
-              _lvl1InputController.add(new TextEditingController());
-              _lvl2InputController.add(new TextEditingController());
+              _lvl1InputControllers.add(new TextEditingController());
+              _lvl2InputControllers.add(new TextEditingController());
 
               _stockInputNodes.add(new FocusNode());
-              _lvl1InputNode.add(new FocusNode());
-              _lvl2InputNode.add(new FocusNode());
-              ++_count;
+              _lvl1InputNodes.add(new FocusNode());
+              _lvl2InputNodes.add(new FocusNode());
             });
           },
           child: Icon(
             EvaIcons.plusCircleOutline,
-            color: Colors.white,
-            size: 40,
+            color: Colors.grey[850],
+            size: 50,
           ),
-          shape: StadiumBorder(),
-          color: Colors.blue,
+          // shape: StadiumBorder(),
+          // color: Colors.blue,
           splashColor: Colors.teal,
-          height: 40,
-          minWidth: 40,
+          // height: 40,
+          // minWidth: 40,
           elevation: 2,
         ),
       ),
     );
-    
-    final header = Padding(
-      padding: const EdgeInsets.all(2.0),
-      child: Text(
-        'Stock Code:',
-        textAlign: TextAlign.left,
-        style: TextStyle(
-          fontSize: 20, 
-          color: Color(0xFF004B83),
-          fontWeight: FontWeight.bold,
+
+    final postButton = Center(
+      child: Padding(
+        padding: EdgeInsets.all(10),
+        child: MaterialButton(
+          onPressed: () {
+            // gather all the information and post data to db by api lib.
+            _postTransaction();
+
+          },
+          child: Icon(
+            EvaIcons.uploadOutline,
+            color: Colors.white,
+            size: 40,
+          ),
+          shape: StadiumBorder(),
+          color: Colors.teal[300],
+          splashColor: Colors.green[50],
+          height: 50,
+          minWidth: 250,
+          elevation: 2,
         ),
       ),
     );
-
-
 
     Widget _descriptionMenu(BuildContext context, String header) {
       return Row(
@@ -540,10 +537,6 @@ class _TransactionState extends State<Transaction> {
         _descriptionMenu(context, 'Description:'),
         new Divider(height: 20.0, color: Colors.black87,),
 
-        _stockInput(1, _stockInputController, _stockInputNode),
-
-        _stockMeasurement(_ctnInputController, _pcsInputController, _ctnInputNode, _pcsInputNode),
-        
         buildContainer(
           ListView.builder(
             itemCount: _stockInputControllers?.length,
@@ -553,16 +546,18 @@ class _TransactionState extends State<Transaction> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    _stockInput(index + 1, _stockInputControllers[index], _stockInputNodes[index]),
+                    _stockInput(index, _stockInputControllers[index], _stockInputNodes[index]),
                     Text('Stock Name: ${_stockNames[index]}'),
+                    _stockMeasurement(index, _lvl1InputControllers[index], _lvl2InputControllers[index], _lvl1InputNodes[index], _lvl2InputNodes[index]),
+                    new Divider(height: 15.0,color: Colors.black87,),
                   ],
                 ),
               );
             },
           ),
         ),
-
-        button,
+        addStockInputButton,
+        postButton,
       ],
     );
 

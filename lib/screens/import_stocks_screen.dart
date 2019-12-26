@@ -203,7 +203,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
         color: Colors.teal,
         splashColor: Colors.green[50],
         height: 55,
-        minWidth: 100,
+        minWidth: 200,
         elevation: 2,
       )
     ); 

@@ -53,10 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: <Widget>[
             IconButton(
               icon: Icon(
-                EvaIcons.infoOutline,
+                EvaIcons.plusCircleOutline,
               ),
               color: Colors.white,
-              onPressed: () {},
+              onPressed: () {
+
+              },
             )
           ],
         ),
