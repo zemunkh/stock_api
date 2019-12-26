@@ -23,13 +23,16 @@ class _TransactionState extends State<Transaction> {
   FocusNode _ctnInputNode = FocusNode();
   FocusNode _pcsInputNode = FocusNode();
 
-  // List<TextEditingController> _stockInputController = new List();
-  // List<TextEditingController> _ctnInputController = new List();
-  // List<TextEditingController> _pcsInputController = new List();
+  List<TextEditingController> _stockInputControllers = new List();
+  List<TextEditingController> _lvl1InputController = new List();
+  List<TextEditingController> _lvl2InputController = new List();
 
-  // List<FocusNode> _stockInputNode = new List();
-  // List<FocusNode> _ctnInputNode = new List();
-  // List<FocusNode> _pcsInputNode = new List();
+  List<FocusNode> _stockInputNodes = new List();
+  List<FocusNode> _lvl1InputNode = new List();
+  List<FocusNode> _lvl2InputNode = new List();
+
+  List<String> _baseUOMs = [];
+  List<String> _stockNames = [];
 
   List<Widget> _children = [];
   int _count = 0;
@@ -49,8 +52,12 @@ class _TransactionState extends State<Transaction> {
       if(row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         int id = row["id"];
+        _stockNames.add(row["stockName"]);
+        _baseUOMs.add(row["baseUOM"]);
         _ctnInputController.text = row["baseUOM"];
         _pcsInputController.text = row["baseUOM"];
+
+        // this will build baseUOM lvl1, lvl2 widgets
       }
     });
 
@@ -75,28 +82,16 @@ class _TransactionState extends State<Transaction> {
       });
     }
   }
+  
+  _controllerEventListener(int index, TextEditingController _controller, String _typeController) {
+    int length = _stockInputControllers.length;
 
-  Future<Null> _addButtonHandler(BuildContext context) async {
-    print('I am clicked!');
-    // final api = Api();
-    // String data = await api.getStocks('OUCOP7');
-    // List receivedData = json.decode(data);
-    // for(int i = 0; i < receivedData.length; i++) {
-    //   print('Fetched data: ${receivedData[i]["details"]}');
-    // }
-    // setState(() {
-    //   _stockInputController.text = receivedData[0]["stockInCode"];
-    //   _pcsInputController.text = receivedData[0]["UOM"].toString();
-    // });
+    print('Length of the controllers: $length, index: $index');
 
-    _children = List.from(_children)
-      ..add(TextFormField(
-        decoration: InputDecoration(hintText: 'Text Field is added $_count'),
-      ));
-    setState(() {
-      ++_count;
-    });
-    // run the api http request to the qne.cloud server
+    buffer = _controller.text;
+
+    // Something to do with UOMs
+
   }
 
   Future<Null> _focusNode(BuildContext context, FocusNode node) async {
@@ -149,38 +144,184 @@ class _TransactionState extends State<Transaction> {
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
     
-
-    final button = Center(
-      child: Padding(
-      padding: EdgeInsets.all(10),
-      child: MaterialButton(
-        onPressed: () {
-          _addButtonHandler(context);
-        },
-        child: Icon(
-          EvaIcons.plusCircleOutline,
-          color: Colors.white,
-          size: 40,
-        ),
-        shape: StadiumBorder(),
-        color: Colors.blue,
-        splashColor: Colors.teal,
-        height: 40,
-        minWidth: 40,
-        elevation: 2,
-      ),
-    ),
-
+    Widget _stockMeasurement(TextEditingController _ctnController, TextEditingController _pcsController, FocusNode _ctnNode, FocusNode _pcsNode) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: EdgeInsets.all(2.0),
+              child: Container(
+                height: 60,
+                child: TextFormField(
+                    style: TextStyle(
+                    fontSize: 12, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'CTN',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 16,
+                      ),
+                      onPressed: () {
+                        _clearTextController(context, _ctnController, _ctnNode);
+                      },
+                    ),
+                  ),
+                  autofocus: false,
+                  controller: _ctnController,
+                  focusNode: _ctnNode,
+                  onTap: () {
+                    _focusNode(context, _ctnNode);
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              'CTN',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 16, 
+                color: Color(0xFF004B83),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Container(
+                height: 60,
+                child: TextFormField(
+                  style: TextStyle(
+                    fontSize: 12, 
+                    color: Color(0xFF004B83),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'pcs',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF004B83), 
+                      fontWeight: FontWeight.w200,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    errorStyle: TextStyle(
+                      color: Colors.yellowAccent,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(EvaIcons.close, 
+                        color: Colors.blueAccent, 
+                        size: 16,
+                      ),
+                      onPressed: () {
+                        _clearTextController(context, _pcsController, _pcsNode);
+                      },
+                    ),
+                  ),
+                  autofocus: false,
+                  controller: _pcsController,
+                  focusNode: _pcsNode,
+                  onTap: () {
+                    _focusNode(context, _pcsNode);
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              'pcs',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 16, 
+                color: Color(0xFF004B83),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       );
+    }
 
-    Widget _stockInput(TextEditingController _controller, FocusNode _stockNode) {
+    // Widget _stockInput(TextEditingController _controller, FocusNode _stockNode) {
+    //   return Padding(
+    //     padding: const EdgeInsets.all(2.0),
+    //     child: Container(
+    //       height: 60,
+    //       child: TextFormField(
+    //         style: TextStyle(
+    //           fontSize: 14, 
+    //           color: Color(0xFF004B83),
+    //           fontWeight: FontWeight.bold,
+    //         ),
+    //         decoration: InputDecoration(
+    //           filled: true,
+    //           fillColor: Colors.white,
+    //           hintText: 'Stock code',
+    //           hintStyle: TextStyle(
+    //             color: Color(0xFF004B83), 
+    //             fontWeight: FontWeight.w200,
+    //           ),
+    //           border: OutlineInputBorder(
+    //             borderRadius: BorderRadius.circular(5.0),
+    //           ),
+    //           errorStyle: TextStyle(
+    //             color: Colors.yellowAccent,
+    //           ),
+    //           suffixIcon: IconButton(
+    //             icon: Icon(EvaIcons.close, 
+    //               color: Colors.blueAccent, 
+    //               size: 24,
+    //             ),
+    //             onPressed: () {
+    //               _clearTextController(context, _controller, _stockNode);
+    //             },
+    //           ),
+    //         ),
+    //         autofocus: false,
+    //         controller: _controller,
+    //         focusNode: _stockNode,
+    //         onTap: () {
+    //           _focusNode(context, _stockNode);
+    //         },
+    //       ),
+    //     ),
+    //   );
+    // }
+    
+    Widget _stockInput(int index, TextEditingController _controller, FocusNode _stockNode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Expanded(
             flex: 4,
             child: Text(
-              'Stock In:',
+              'Stock In: $index',
               textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 20, 
@@ -231,6 +372,9 @@ class _TransactionState extends State<Transaction> {
                   onTap: () {
                     _focusNode(context, _stockNode);
                   },
+                  onChanged: (value) {
+                    _controllerEventListener(index, _controller);
+                  },
                 ),
               ),
             ),
@@ -238,6 +382,53 @@ class _TransactionState extends State<Transaction> {
         ],
       );
     }
+
+    final button = Center(
+      child: Padding(
+        padding: EdgeInsets.all(10),
+        child: MaterialButton(
+          onPressed: () {
+            setState(() {
+              _baseUOMs.add('');
+              _stockInputControllers.add(new TextEditingController());
+              _lvl1InputController.add(new TextEditingController());
+              _lvl2InputController.add(new TextEditingController());
+
+              _stockInputNodes.add(new FocusNode());
+              _lvl1InputNode.add(new FocusNode());
+              _lvl2InputNode.add(new FocusNode());
+              ++_count;
+            });
+          },
+          child: Icon(
+            EvaIcons.plusCircleOutline,
+            color: Colors.white,
+            size: 40,
+          ),
+          shape: StadiumBorder(),
+          color: Colors.blue,
+          splashColor: Colors.teal,
+          height: 40,
+          minWidth: 40,
+          elevation: 2,
+        ),
+      ),
+    );
+    
+    final header = Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: Text(
+        'Stock Code:',
+        textAlign: TextAlign.left,
+        style: TextStyle(
+          fontSize: 20, 
+          color: Color(0xFF004B83),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+
+
 
     Widget _descriptionMenu(BuildContext context, String header) {
       return Row(
@@ -325,130 +516,6 @@ class _TransactionState extends State<Transaction> {
       );
     }
 
-    Widget _stockMeasurement(TextEditingController _ctnController, TextEditingController _pcsController, FocusNode _ctnNode, FocusNode _pcsNode) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: EdgeInsets.all(2.0),
-              child: Container(
-                height: 60,
-                child: TextFormField(
-                    style: TextStyle(
-                    fontSize: 12, 
-                    color: Color(0xFF004B83),
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'CTN',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
-                      fontWeight: FontWeight.w200,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    errorStyle: TextStyle(
-                      color: Colors.yellowAccent,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
-                        size: 16,
-                      ),
-                      onPressed: () {
-                        _clearTextController(context, _ctnController, _ctnNode);
-                      },
-                    ),
-                  ),
-                  autofocus: false,
-                  controller: _ctnController,
-                  focusNode: _ctnNode,
-                  onTap: () {
-                    _focusNode(context, _ctnNode);
-                  },
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              'CTN',
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: 20, 
-                color: Color(0xFF004B83),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: Container(
-                height: 60,
-                child: TextFormField(
-                  style: TextStyle(
-                    fontSize: 12, 
-                    color: Color(0xFF004B83),
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'PCS',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
-                      fontWeight: FontWeight.w200,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    errorStyle: TextStyle(
-                      color: Colors.yellowAccent,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
-                        size: 16,
-                      ),
-                      onPressed: () {
-                        _clearTextController(context, _pcsController, _pcsNode);
-                      },
-                    ),
-                  ),
-                  autofocus: false,
-                  controller: _pcsController,
-                  focusNode: _pcsNode,
-                  onTap: () {
-                    _focusNode(context, _pcsNode);
-                  },
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              'PCS',
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: 20, 
-                color: Color(0xFF004B83),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
     Widget buildContainer(Widget child) {
       return Container(
         decoration: BoxDecoration(
@@ -473,11 +540,27 @@ class _TransactionState extends State<Transaction> {
         _descriptionMenu(context, 'Description:'),
         new Divider(height: 20.0, color: Colors.black87,),
 
-        _stockInput(_stockInputController, _stockInputNode),
+        _stockInput(1, _stockInputController, _stockInputNode),
 
         _stockMeasurement(_ctnInputController, _pcsInputController, _ctnInputNode, _pcsInputNode),
         
-        buildContainer(ListView(children: _children),),
+        buildContainer(
+          ListView.builder(
+            itemCount: _stockInputControllers?.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                padding: const EdgeInsets.all(4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    _stockInput(index + 1, _stockInputControllers[index], _stockInputNodes[index]),
+                    Text('Stock Name: ${_stockNames[index]}'),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
 
         button,
       ],
