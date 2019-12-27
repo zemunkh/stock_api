@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:retail_api/screens/draft_screen.dart';
 import 'package:retail_api/screens/import_stocks_screen.dart';
-import 'package:retail_api/screens/saved_record_screen.dart';
 import 'package:retail_api/screens/settings_screen.dart';
+import 'package:retail_api/screens/stockIn_draft_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './screens/activation_screen.dart';
@@ -53,7 +52,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (ctx) => activated ? HomeScreen() : ActivationScreen(),
         '/main': (ctx) => HomeScreen(),
-        DraftScreen.routeName: (ctx) => DraftScreen(),
+        StockInDraftScreen.routeName: (ctx) => StockInDraftScreen(),
         SettingScreen.routeName: (ctx) => SettingScreen(),
         ImportStocksScreen.routeName: (ctx) => ImportStocksScreen(),
       },

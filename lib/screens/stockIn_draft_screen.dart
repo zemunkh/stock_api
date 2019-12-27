@@ -1,17 +1,18 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
+import '../widgets/stockIn_draft_item.dart';
 import '../styles/theme.dart' as Style;
 import '../helper/file_manager.dart';
 import '../widgets/main_drawer.dart';
 
 
-class DraftScreen extends StatefulWidget {
+class StockInDraftScreen extends StatefulWidget {
   static const routeName = '/draft';
   @override
-  DraftScreenState createState() => DraftScreenState();
+  StockInDraftScreenState createState() => StockInDraftScreenState();
 }
 
-class DraftScreenState extends State<DraftScreen> {
+class StockInDraftScreenState extends State<StockInDraftScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
 
@@ -59,9 +60,33 @@ class DraftScreenState extends State<DraftScreen> {
           onTap: () {
             FocusScope.of(context).requestFocus(new FocusNode());
           },
-          child: Center(
-            child: Text('Draft Screen'),
+          child: Container(
+          child: new FutureBuilder(
+            future: FileManager.getDraftBank(),
+            builder: (context, snapshot){
+              if(snapshot.connectionState == ConnectionState.done) {
+                var myData = snapshot.data;
+                return Container(
+                  child: ListView.builder(
+                    itemCount: myData == null ? 0: myData.length,
+                    itemBuilder: (_, i) => Column(
+                      children: [
+                        StockInDraftItem(
+                          myData[i],
+                          i,
+                        ),
+                        Divider(),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              else {
+                return new Center(child:CircularProgressIndicator(),);
+              }
+            },
           ),
+        ),
         ),
       ),
     );

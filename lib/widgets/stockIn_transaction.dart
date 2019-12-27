@@ -1,15 +1,16 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../screens/home_screen.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
 
-class Transaction extends StatefulWidget {
+class StockInTransaction extends StatefulWidget {
   @override
-  _TransactionState createState() => _TransactionState();
+  _StockInTransactionState createState() => _StockInTransactionState();
 }
 
-class _TransactionState extends State<Transaction> {
+class _StockInTransactionState extends State<StockInTransaction> {
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
 
@@ -126,8 +127,40 @@ class _TransactionState extends State<Transaction> {
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
+    String createdAt = DateFormat("yyyy/MM/dd HH:mm").format(createdDate);
+    int len = _stockInputControllers.length;
 
+    List<String> _stockCodeList = [];
+    List<String> _stockNameList = [];
+    List<String> _lvl1uomList = [];
+    List<String> _lvl2uomList = [];
+    List<String> _otherList = [];
 
+    for(int i = 0; i < len; i++) {
+      _stockCodeList.add(_stockInputControllers[i].text);
+      _stockNameList.add(_stockNames[i]);
+      _lvl1uomList.add(_lvl1InputControllers[i].text);
+      _lvl2uomList.add(_lvl2InputControllers[i].text);
+    }
+
+    _otherList.add(createdDate.toString());
+    _otherList.add(trxNumber);
+    _otherList.add(dropdownValue);
+
+    List<String> draftBank = await FileManager.getDraftList();
+    String index = '${draftBank.length}';
+    String draftName = '$trxNumber';
+    // Saving new draft list to Draft Bank for the Draft list page.
+    FileManager.saveDraftList(draftName);
+    print('Draft names: draft_stockCode_$index, draft_stockName_$index');
+
+    FileManager.saveDraft('draft_stockCode_$index', _stockCodeList);
+    FileManager.saveDraft('draft_stockName_$index', _stockNameList);
+    FileManager.saveDraft('draft_lvl1uomList_$index', _lvl1uomList);
+    FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
+    FileManager.saveDraft('draft_other_$index', _otherList);
+
+    Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
   }
 
   Future<bool> _deleteRow(int index) {
@@ -267,7 +300,7 @@ class _TransactionState extends State<Transaction> {
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: _baseUOMs[index],
+                    hintText: 'lvl1: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -314,7 +347,7 @@ class _TransactionState extends State<Transaction> {
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText:_baseUOMs[index],
+                    hintText:'lvl2: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,

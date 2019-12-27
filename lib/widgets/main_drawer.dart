@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:retail_api/screens/import_stocks_screen.dart';
+import '../screens/stockIn_draft_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/saved_record_screen.dart';
-import '../screens/draft_screen.dart';
 import '../screens/settings_screen.dart';
 
 
@@ -66,7 +66,7 @@ class MainDrawer extends StatelessWidget {
               'Drafts', 
               EvaIcons.carOutline,
               () {
-                Navigator.of(context).pushReplacementNamed(DraftScreen.routeName);
+                Navigator.of(context).pushReplacementNamed(StockInDraftScreen.routeName);
               }
             ),          
 

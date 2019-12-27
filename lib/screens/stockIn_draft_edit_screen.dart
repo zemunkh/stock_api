@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
-import '../widgets/stockIn_transaction.dart';
+import 'package:retail_api/widgets/stockIn_draft_edit_item.dart';
 
 import '../widgets/main_drawer.dart';
 import '../styles/theme.dart' as Style;
 
-class HomeScreen extends StatefulWidget {
-  static const routeName = '/home';
+class StockInDraftEditScreen extends StatefulWidget {
+  static const routeName = '/draft_edit';
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _StockInDraftEditScreenState createState() => _StockInDraftEditScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       )
     );
   }
-
+  
   @override 
   Widget build(BuildContext context) {
 
@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             title: new Text(
-              'Mugs Stock Control',
+              'Draft Edit Page',
               style: TextStyle(
                 fontSize: 16,
               ),
@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
         drawer: MainDrawer(),
         body: Padding(
           padding: EdgeInsets.all(16.0),
-          child: StockInTransaction(),
+          child: StockInDraftEditTransaction(),
         ),
       ),
     );
