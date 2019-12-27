@@ -11,7 +11,8 @@ class Transaction extends StatefulWidget {
 
 class _TransactionState extends State<Transaction> {
   final dbHelper = DatabaseHelper.instance;
-  
+  bool _isButtonDisabled = true;
+
   List<TextEditingController> _stockInputControllers = new List();
   List<TextEditingController> _lvl1InputControllers = new List();
   List<TextEditingController> _lvl2InputControllers = new List();
@@ -19,6 +20,8 @@ class _TransactionState extends State<Transaction> {
   List<FocusNode> _stockInputNodes = new List();
   List<FocusNode> _lvl1InputNodes = new List();
   List<FocusNode> _lvl2InputNodes = new List();
+
+  String trxNumber = '';
 
   List<String> _baseUOMs = [];
   List<String> _stockNames = [];
@@ -32,22 +35,28 @@ class _TransactionState extends State<Transaction> {
   // <String>['One from the world, you know it', 'Two', 'Free', 'Four']
 
   Future<Null> _searchStockCode(int index, String stockCode) async {
-
+    bool isEmpty = false;
     List<Map> stockData = await dbHelper.queryAllRows();
 
     stockData.forEach((row){
       if(row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
-        int id = row["id"];
         _stockNames[index] = (row["stockName"]);
         _baseUOMs[index] = (row["baseUOM"]);
 
+        isEmpty = isEmpty || true;
+        print('I got this :)');
         // _lvl1InputControllers[index].text = row["baseUOM"];
         
         // this will build baseUOM lvl1, lvl2 widgets
+      } else {
+        isEmpty = isEmpty || false;
       }
     });
 
+    setState(() {
+      _isButtonDisabled = !isEmpty;
+    });
   }
 
   
@@ -101,12 +110,14 @@ class _TransactionState extends State<Transaction> {
             child: Text('Yes'),
             onPressed: () {
               print('Yes clicked');
+              Navigator.of(context).pop();
             },
           ),
           FlatButton(
             child: Text('No'),
             onPressed: () {
               print('No clicked');
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -114,8 +125,57 @@ class _TransactionState extends State<Transaction> {
     );
   }
 
+  Future<Null> _saveTheDraft(DateTime createdDate) async {
+
+
+  }
+
+  Future<bool> _deleteRow(int index) {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Do you want to delete #${index + 1} row?"),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Yes'),
+            onPressed: () {
+              print('Yes clicked');
+              setState(() {
+                _baseUOMs.removeAt(index);
+                _stockNames.removeAt(index);
+                _stockInputControllers.removeAt(index);
+                _lvl1InputControllers.removeAt(index);
+                _lvl2InputControllers.removeAt(index);
+
+                _stockInputNodes.removeAt(index);
+                _lvl1InputNodes.removeAt(index);
+                _lvl2InputNodes.removeAt(index);
+                if(index == 0) {
+                  setState(() {
+                    _isButtonDisabled = true;
+                  });
+                }
+              });
+              Navigator.pop(context, true);
+            },
+          ),
+          FlatButton(
+            child: Text('No'),
+            onPressed: () {
+              print('No clicked');
+              Navigator.pop(context, true);
+            },
+          ),
+        ],
+      )
+    );
+  }
 
   Future<Null> setInitials() async {
+    DateTime createdDate = DateTime.now();
+    int numbering = await FileManager.getTrxNumbering();
+    FileManager.setTrxNumbering(numbering + 1);
+
     _descripts = await FileManager.readDescriptions();
     if(_descripts.isEmpty || _descripts == null) {
       setState(() {
@@ -135,6 +195,7 @@ class _TransactionState extends State<Transaction> {
     }
 
     setState(() {
+      trxNumber = 'SIN${DateFormat("yyMMdd").format(createdDate)}/${numbering + 1}';
       _baseUOMs.add('Unit');
       _stockNames.add('StockCode');
       _stockInputControllers.add(new TextEditingController());
@@ -161,7 +222,8 @@ class _TransactionState extends State<Transaction> {
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
-    
+
+
     Widget deleteRowButton(int index) {
       return Padding(
         padding: EdgeInsets.all(5),
@@ -169,17 +231,7 @@ class _TransactionState extends State<Transaction> {
           onPressed: () {
             // delete current row
             print("Clicked row index: $index");
-            setState(() {
-            _baseUOMs.removeAt(index);
-            _stockNames.removeAt(index);
-            _stockInputControllers.removeAt(index);
-            _lvl1InputControllers.removeAt(index);
-            _lvl2InputControllers.removeAt(index);
-
-            _stockInputNodes.removeAt(index);
-            _lvl1InputNodes.removeAt(index);
-            _lvl2InputNodes.removeAt(index);
-          });
+            _deleteRow(index);
           },
           child: Icon(
             Icons.delete,
@@ -390,14 +442,14 @@ class _TransactionState extends State<Transaction> {
           },
           child: Icon(
             EvaIcons.plusCircleOutline,
-            color: Colors.grey[850],
-            size: 50,
+            color: Colors.blueGrey,
+            size: 40,
           ),
           // shape: StadiumBorder(),
-          // color: Colors.blue,
+          // color: Colors.lightBlue[600],
           splashColor: Colors.teal,
-          // height: 40,
-          // minWidth: 40,
+          height: 50,
+          // minWidth: MediaQuery.of(context).size.width / 2,
           elevation: 2,
         ),
       ),
@@ -407,25 +459,64 @@ class _TransactionState extends State<Transaction> {
       child: Padding(
         padding: EdgeInsets.all(10),
         child: MaterialButton(
-          onPressed: () {
+          onPressed: _isButtonDisabled ? null : () {
             // gather all the information and post data to db by api lib.
             _postTransaction();
 
           },
-          child: Icon(
-            EvaIcons.uploadOutline,
-            color: Colors.white,
-            size: 40,
+          child: Text(
+            'Complete Trx',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'QuickSand',
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           shape: StadiumBorder(),
           color: Colors.teal[300],
           splashColor: Colors.green[50],
-          height: 50,
-          minWidth: 250,
+          height: 40,
+          minWidth: 140,
           elevation: 2,
         ),
       ),
     );
+
+
+    Widget _saveDraftButton(BuildContext context) {
+      return Padding(
+        padding: EdgeInsets.all(5),
+        child: MaterialButton(
+          onPressed: _isButtonDisabled ? null : () {
+            print('You pressed Draft Button!');
+            _saveTheDraft(createdDate).then((_){
+
+              Scaffold.of(context).showSnackBar(SnackBar(
+                content: new Text("Draft Saved!", textAlign: TextAlign.center,),
+                duration: const Duration(milliseconds: 500)
+              ));
+            });
+
+          },
+          child: Text(
+            'Save as Draft',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'QuickSand',
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          shape: StadiumBorder(),
+          color: Colors.orange[800],
+          splashColor: Colors.yellow[200],
+          height: 40,
+          minWidth: 100,
+          elevation: 2,
+        )
+      );
+    }
 
     Widget _descriptionMenu(BuildContext context, String header) {
       return Row(
@@ -498,7 +589,7 @@ class _TransactionState extends State<Transaction> {
             Expanded(
               flex: 7,
               child: Text(
-                'System Auto: SIN191200',
+                'System Auto: $trxNumber',
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   fontFamily: 'QuickSand',
@@ -522,7 +613,7 @@ class _TransactionState extends State<Transaction> {
         ),
         margin: EdgeInsets.all(5),
         padding: EdgeInsets.all(5),
-        height: 450,
+        height: 350,
         width: 400,
         child: child,
       );  
@@ -557,7 +648,17 @@ class _TransactionState extends State<Transaction> {
           ),
         ),
         addStockInputButton,
-        postButton,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            Expanded(
+              child: postButton,
+            ),
+            Expanded(
+              child: _saveDraftButton(context),
+            )
+          ],
+        ),
       ],
     );
 

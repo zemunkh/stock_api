@@ -61,15 +61,9 @@ class MainDrawer extends StatelessWidget {
             new Divider(height: 15.0,color: Colors.black87,),
             
             SizedBox(height:  20),
+
             buildListTile(
-              'Saved Record', 
-              EvaIcons.checkmarkCircle,
-              () {
-                Navigator.of(context).pushReplacementNamed(SavedRecordScreen.routeName);
-              }
-            ),
-            buildListTile(
-              'Draft', 
+              'Drafts', 
               EvaIcons.carOutline,
               () {
                 Navigator.of(context).pushReplacementNamed(DraftScreen.routeName);

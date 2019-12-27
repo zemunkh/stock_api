@@ -51,7 +51,7 @@ class DraftScreenState extends State<DraftScreen> {
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text('Settings'),
+          title: Text('Drafts'),
           backgroundColor: Style.Colors.mainAppBar,
         ),
         drawer: MainDrawer(),
@@ -59,7 +59,7 @@ class DraftScreenState extends State<DraftScreen> {
           onTap: () {
             FocusScope.of(context).requestFocus(new FocusNode());
           },
-          child: Container(
+          child: Center(
             child: Text('Draft Screen'),
           ),
         ),

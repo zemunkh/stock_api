@@ -24,49 +24,71 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<bool> _backButtonPressed() {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Exit the Stock App?"),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Yes'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+          FlatButton(
+            child: Text('No'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ],
+      )
+    );
+  }
+  
   @override 
   Widget build(BuildContext context) {
 
-    return Scaffold(
-      backgroundColor: Style.Colors.background,
-      key: _scaffoldKey,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
-        child: AppBar(
-          elevation: 2.0,
-          backgroundColor: Color(0xFFFF9500),
-          leading: IconButton(
-            icon: Icon(
-              EvaIcons.menu2Outline,
-            ),
-            color: Colors.white,
-            onPressed: () {
-              _scaffoldKey.currentState.openDrawer();
-            },
-          ),
-          title: new Text(
-            'Mugs Stock Control',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
+    return WillPopScope(
+      onWillPop: _backButtonPressed,
+      child: Scaffold(
+        backgroundColor: Style.Colors.background,
+        key: _scaffoldKey,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(50.0),
+          child: AppBar(
+            elevation: 2.0,
+            backgroundColor: Color(0xFFFF9500),
+            leading: IconButton(
               icon: Icon(
-                EvaIcons.plusCircleOutline,
+                EvaIcons.menu2Outline,
               ),
               color: Colors.white,
               onPressed: () {
-
+                _scaffoldKey.currentState.openDrawer();
               },
-            )
-          ],
+            ),
+            title: new Text(
+              'Mugs Stock Control',
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(
+                  EvaIcons.plusCircleOutline,
+                ),
+                color: Colors.white,
+                onPressed: () {
+
+                },
+              )
+            ],
+          ),
         ),
-      ),
-      drawer: MainDrawer(),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Transaction(),
+        drawer: MainDrawer(),
+        body: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Transaction(),
+        ),
       ),
     );
   }

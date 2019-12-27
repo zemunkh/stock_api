@@ -53,7 +53,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (ctx) => activated ? HomeScreen() : ActivationScreen(),
         '/main': (ctx) => HomeScreen(),
-        SavedRecordScreen.routeName: (ctx) => SavedRecordScreen(),
         DraftScreen.routeName: (ctx) => DraftScreen(),
         SettingScreen.routeName: (ctx) => SettingScreen(),
         ImportStocksScreen.routeName: (ctx) => ImportStocksScreen(),

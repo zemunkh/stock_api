@@ -166,6 +166,21 @@ class FileManager {
     return len;
   }
 
+  static Future<Null> setTrxNumbering(int number) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('trx_numbering', number);
+    return null;
+  }
+  // Set and get Transaction numbering by system
+  static Future<int> getTrxNumbering() async {
+    final prefs = await SharedPreferences.getInstance();
+    int number = prefs.getInt('trx_numbering');
+    if(number == null) {
+      return 0;
+    }
+    return number;
+  }
+
   static Future<Null> setSelectedIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('draft_selected', index);
