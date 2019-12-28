@@ -1,4 +1,3 @@
-import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import '../widgets/stockIn_draft_item.dart';
 import '../styles/theme.dart' as Style;
@@ -53,7 +52,7 @@ class StockInDraftScreenState extends State<StockInDraftScreen> {
         key: _scaffoldKey,
         appBar: AppBar(
           title: Text('Drafts'),
-          backgroundColor: Style.Colors.mainAppBar,
+          backgroundColor: Style.Colors.mainAppBar2,
         ),
         drawer: MainDrawer(),
         body: GestureDetector(

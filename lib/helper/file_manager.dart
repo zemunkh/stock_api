@@ -110,6 +110,25 @@ class FileManager {
     return len;
   }
 
+// Transaction Numbering Date Saving 
+
+  static Future<Null> setTrxDate(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = 'trx_date';
+    prefs.setString(key, value);
+  }
+
+  static Future<String> getTrxDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = 'trx_date';
+    String trxDate = prefs.getString(key);
+    if(trxDate == null) {
+      return ' ';
+    }
+    return trxDate;
+  }
+
+
   static Future<Null> setTrxNumbering(int number) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('trx_numbering', number);

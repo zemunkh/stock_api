@@ -23,7 +23,7 @@ dependencies:
   path_provider: ^1.5.1
   sqflite: ^1.2.0
   # share_extend: ^1.1.0
-  # rflutter_alert: ^1.0.3
+  rflutter_alert: ^1.0.3
 
 dev_dependencies:
   flutter_test:

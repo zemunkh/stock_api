@@ -1,6 +1,7 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import '../screens/home_screen.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
@@ -127,7 +128,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
-    String createdAt = DateFormat("yyyy/MM/dd HH:mm").format(createdDate);
     int len = _stockInputControllers.length;
 
     List<String> _stockCodeList = [];
@@ -159,8 +159,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     FileManager.saveDraft('draft_lvl1uomList_$index', _lvl1uomList);
     FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
     FileManager.saveDraft('draft_other_$index', _otherList);
-
-    Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+    FileManager.saveDraft('draft_baseUoms_$index', _baseUOMs);
   }
 
   Future<bool> _deleteRow(int index) {
@@ -205,9 +204,21 @@ class _StockInTransactionState extends State<StockInTransaction> {
   }
 
   Future<Null> setInitials() async {
-    DateTime createdDate = DateTime.now();
+    DateTime currentDate = DateTime.now();
+    String cdate = DateFormat("yyMMdd").format(currentDate);
+
+    // Comparing the new trx number and old trx number for renewal
+    String savedTrxDate = await FileManager.getTrxDate();
     int numbering = await FileManager.getTrxNumbering();
-    FileManager.setTrxNumbering(numbering + 1);
+    if(cdate == savedTrxDate) {
+      FileManager.setTrxNumbering(numbering + 1);
+      ++numbering;
+    } else {
+      FileManager.setTrxNumbering(0);
+      numbering = 0;
+      FileManager.setTrxDate(cdate);
+    }
+
 
     _descripts = await FileManager.readDescriptions();
     if(_descripts.isEmpty || _descripts == null) {
@@ -228,7 +239,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
     }
 
     setState(() {
-      trxNumber = 'SIN${DateFormat("yyMMdd").format(createdDate)}/${numbering + 1}';
+      if(numbering < 10) {
+        trxNumber = 'SIN${DateFormat("yyMMdd").format(currentDate)}/00$numbering';
+      } else if(numbering < 100 && numbering >= 10) {
+        trxNumber = 'SIN${DateFormat("yyMMdd").format(currentDate)}/0$numbering';
+      } else {
+        trxNumber = 'SIN${DateFormat("yyMMdd").format(currentDate)}/$numbering';
+      }
+
       _baseUOMs.add('Unit');
       _stockNames.add('StockCode');
       _stockInputControllers.add(new TextEditingController());
@@ -300,7 +318,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'lvl1: ${_baseUOMs[index]}',
+                    hintText: '  lvl1: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -347,7 +365,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText:'lvl2: ${_baseUOMs[index]}',
+                    hintText:'  lvl2: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -525,10 +543,22 @@ class _StockInTransactionState extends State<StockInTransaction> {
             print('You pressed Draft Button!');
             _saveTheDraft(createdDate).then((_){
 
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: new Text("Draft Saved!", textAlign: TextAlign.center,),
-                duration: const Duration(milliseconds: 500)
-              ));
+              Alert(
+                context: context,
+                type: AlertType.success,
+                title: "StockIn draft is saved successfully",
+                desc: "Current page will be deleted now.",
+                buttons: [
+                  DialogButton(
+                    child: Text(
+                      "OK",
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () => Navigator.of(context).pushReplacementNamed(HomeScreen.routeName),
+                    width: 120,
+                  )
+                ],
+              ).show();
             });
 
           },

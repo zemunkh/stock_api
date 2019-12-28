@@ -55,7 +55,7 @@ class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
           preferredSize: Size.fromHeight(50.0),
           child: AppBar(
             elevation: 2.0,
-            backgroundColor: Color(0xFFFF9500),
+            backgroundColor: Style.Colors.mainAppBar2,
             leading: IconButton(
               icon: Icon(
                 EvaIcons.menu2Outline,

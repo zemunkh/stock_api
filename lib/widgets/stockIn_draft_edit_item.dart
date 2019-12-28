@@ -1,7 +1,8 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../screens/home_screen.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import '../screens/stockIn_draft_screen.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
 
@@ -24,19 +25,21 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
   String trxNumber = '';
 
-
+  String statusTime = '';
 
   List<String> _baseUOMs = [];
   List<String> _stockNames = [];
 
   DateTime draftCreatedAt;
 
+  // For the buffering from the saved and indexed values
   List<String> _otherList = [];
-
   List<String> _stockCodeList = [];
   List<String> _stockNameList = [];
   List<String> _lvl1uomList = [];
-  List<String> _lvl2uomList = [];  
+  List<String> _lvl2uomList = []; 
+  List<String> _baseUomsList = [];
+
 
   // Dropdown menu variables
   List<String> _descriptions = [];
@@ -137,7 +140,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
-    String createdAt = DateFormat("yyyy/MM/dd HH:mm").format(createdDate);
     int len = _stockInputControllers.length;
 
     List<String> _stockCodeList = [];
@@ -153,15 +155,17 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       _lvl2uomList.add(_lvl2InputControllers[i].text);
     }
 
-    _otherList.add(createdDate.toString());
+    _otherList.add(draftCreatedAt.toString());
     _otherList.add(trxNumber);
     _otherList.add(dropdownValue);
 
-    List<String> draftBank = await FileManager.getDraftList();
-    String index = '${draftBank.length}';
-    String draftName = '$trxNumber';
-    // Saving new draft list to Draft Bank for the Draft list page.
-    FileManager.saveDraftList(draftName);
+    int draftIndex = await FileManager.getSelectedIndex();
+    String index = draftIndex.toString();
+    // String draftName = '$trxNumber';
+    // Saving draft list to Draft Bank for the Draft list page.
+    // FileManager.saveDraftList(draftName);
+
+    // Draft updating feature started
     print('Draft names: draft_stockCode_$index, draft_stockName_$index');
 
     FileManager.saveDraft('draft_stockCode_$index', _stockCodeList);
@@ -170,7 +174,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
     FileManager.saveDraft('draft_other_$index', _otherList);
 
-    Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
   }
 
   Future<bool> _deleteRow(int index) {
@@ -215,7 +218,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   }
 
   Future<Null> setInitials() async {
-    DateTime draftDate = DateTime.parse(_otherList[0]);
     // =============== GET SELECTED DRAFT LIST VALUE ============== //
     int draftIndex = await FileManager.getSelectedIndex();
     _otherList = await FileManager.readDraft('draft_other_$draftIndex');
@@ -224,10 +226,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     _stockNameList = await FileManager.readDraft('draft_stockName_$draftIndex');
     _lvl1uomList = await FileManager.readDraft('draft_lvl1uomList_$draftIndex');
     _lvl2uomList = await FileManager.readDraft('draft_lvl2uomList_$draftIndex');
-
-    // DateTime createdDate = DateTime.now();
-    // int numbering = await FileManager.getTrxNumbering();
-    // FileManager.setTrxNumbering(numbering + 1);
+    _baseUomsList = await FileManager.readDraft('draft_baseUoms_$draftIndex');
 
     _descripts = await FileManager.readDescriptions();
     if(_descripts.isEmpty || _descripts == null) {
@@ -247,23 +246,31 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       });
     }
 
+    // Now Extracting Saved String List values to the fields based on index
+    DateTime draftDate = DateTime.parse(_otherList[0]);
+    
     setState(() {
-    for(int i = 0; i < _stockCodeList.length; i++) {
-      print('Adding!');
-      _stockInputControllers.add(new TextEditingController());
-      _lvl1InputControllers.add(new TextEditingController());
-      _lvl2InputControllers.add(new TextEditingController());
-      _stockNames.add('');
+      draftCreatedAt = draftDate;
+      statusTime = DateFormat("yyyy/MM/dd HH:mm:ss").format(draftDate);
+      trxNumber = _otherList[1];
+      for(int i = 0; i < _stockCodeList.length; i++) {
+        print('Adding!');
+        _stockInputControllers.add(new TextEditingController());
+        _lvl1InputControllers.add(new TextEditingController());
+        _lvl2InputControllers.add(new TextEditingController());
+        _stockNames.add('');
+        _baseUOMs.add('');
 
-      _stockInputControllers[i].text = _stockCodeList[i];
-      _lvl1InputControllers[i].text = _lvl1uomList[i];
-      _lvl2InputControllers[i].text = _lvl2uomList[i];
-      _stockNames[i] = _stockNameList[i];
-    }
+        _stockInputControllers[i].text = _stockCodeList[i];
+        _lvl1InputControllers[i].text = _lvl1uomList[i];
+        _lvl2InputControllers[i].text = _lvl2uomList[i];
+        _stockNames[i] = _stockNameList[i];
+        _baseUOMs[i] = _baseUomsList[i];
 
-      _stockInputNodes.add(new FocusNode());
-      _lvl1InputNodes.add(new FocusNode());
-      _lvl2InputNodes.add(new FocusNode());
+        _stockInputNodes.add(new FocusNode());
+        _lvl1InputNodes.add(new FocusNode());
+        _lvl2InputNodes.add(new FocusNode());
+      }
     });
   }
 
@@ -325,7 +332,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'lvl1: ${_baseUOMs[index]}',
+                    hintText: '  lvl1: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -372,7 +379,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText:'lvl2: ${_baseUOMs[index]}',
+                    hintText:'  lvl2: ${_baseUOMs[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -550,10 +557,22 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             print('You pressed Draft Button!');
             _saveTheDraft(createdDate).then((_){
 
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: new Text("Draft Saved!", textAlign: TextAlign.center,),
-                duration: const Duration(milliseconds: 500)
-              ));
+              Alert(
+                context: context,
+                type: AlertType.success,
+                title: "StockIn draft is saved successfully",
+                desc: "Current Draft is saved again",
+                buttons: [
+                  DialogButton(
+                    child: Text(
+                      "OK",
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () => Navigator.of(context).pushReplacementNamed(StockInDraftScreen.routeName),
+                    width: 120,
+                  )
+                ],
+              ).show();
             });
 
           },
@@ -680,7 +699,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     final transaction = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        statusBar(DateFormat("yyyy/MM/dd HH:mm:ss").format(draftCreatedAt)),
+        statusBar(statusTime),
         // descriptionMenu,
         // stockParameters,
         _descriptionMenu(context, 'Description:'),
