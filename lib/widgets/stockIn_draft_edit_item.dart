@@ -14,6 +14,7 @@ class StockInDraftEditTransaction extends StatefulWidget {
 class _StockInDraftEditTransactionState extends State<StockInDraftEditTransaction> {
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
+  bool _isDraftButtonDisabled = true;
 
   List<TextEditingController> _stockInputControllers = new List();
   List<TextEditingController> _lvl1InputControllers = new List();
@@ -71,6 +72,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     setState(() {
       _isButtonDisabled = !isEmpty;
+      _isDraftButtonDisabled = !isEmpty;
     });
   }
 
@@ -173,6 +175,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     FileManager.saveDraft('draft_lvl1uomList_$index', _lvl1uomList);
     FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
     FileManager.saveDraft('draft_other_$index', _otherList);
+    FileManager.saveDraft('draft_baseUoms_$index', _baseUOMs);
 
   }
 
@@ -261,6 +264,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         _stockNames.add('');
         _baseUOMs.add('');
 
+        // Complete & Draft button enabling logic is here
+        if(_stockCodeList[i] != '' && (_lvl1uomList[i] != '' || _lvl1uomList[i] != '') && _stockNameList[i] != 'StockCode' && _baseUomsList[i] != 'Unit') {
+          _isButtonDisabled = false;
+          print('All requirements are filled');
+        }
+
         _stockInputControllers[i].text = _stockCodeList[i];
         _lvl1InputControllers[i].text = _lvl1uomList[i];
         _lvl2InputControllers[i].text = _lvl2uomList[i];
@@ -297,6 +306,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             // delete current row
             print("Clicked row index: $index");
             _deleteRow(index);
+            _isDraftButtonDisabled = false;
           },
           child: Icon(
             Icons.delete,
@@ -503,6 +513,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
               _stockInputNodes.add(new FocusNode());
               _lvl1InputNodes.add(new FocusNode());
               _lvl2InputNodes.add(new FocusNode());
+
+              _isDraftButtonDisabled = false;
             });
           },
           child: Icon(
@@ -553,7 +565,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       return Padding(
         padding: EdgeInsets.all(5),
         child: MaterialButton(
-          onPressed: _isButtonDisabled ? null : () {
+          onPressed: _isDraftButtonDisabled ? null : () {
             print('You pressed Draft Button!');
             _saveTheDraft(createdDate).then((_){
 
@@ -628,6 +640,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   onChanged: (String newValue) {
                     setState(() {
                       dropdownValue = newValue;
+                      _isDraftButtonDisabled = false;
                     });
                     // Add some functions to handle change.
                   },
