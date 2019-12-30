@@ -39,6 +39,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
   String buffer = '';
   String trueVal = '';
 
+  bool postClicked = false;
   // URL preparation function initialization
   String ip, port, dbCode;
   String urlStatus = 'not found';
@@ -49,7 +50,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     port =  await FileManager.readProfile('port_number');
     dbCode =  await FileManager.readProfile('company_name');
     if(ip != '' && port != '' && dbCode != '') {
-      _url = 'http://$ip:$port/api/Stocks';
+      _url = 'http://$ip:$port/api/StocksIns';
     } else {
       _url = 'https://dev-api.qne.cloud/api/StockIns';
       dbCode = 'OUCOP7';
@@ -591,11 +592,16 @@ class _StockInTransactionState extends State<StockInTransaction> {
                   FlatButton(
                     child: Text('Yes'),
                     onPressed: () {
-                      print('Yes clicked');
-                      _postTransaction(createdDate).then((_) {
-                        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
-                      });
-
+                      /// gggg
+                      if(!postClicked) {
+                        print('Yes clicked');
+                        _postTransaction(createdDate).then((_) {
+                          Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+                        });
+                        setState(() {
+                          postClicked = true;
+                        });
+                      }
                     },
                   ),
                   FlatButton(
@@ -608,8 +614,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
                 ],
               )
             );
-
-
           },
           child: Text(
             'Complete Trx',
