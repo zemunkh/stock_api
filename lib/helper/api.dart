@@ -1,19 +1,12 @@
 import 'dart:async';
 import 'dart:convert' show json, utf8;
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
-import '../helper/file_manager.dart';
+import '../model/stockIn.dart';
 
-
-const apiCategory = {
-  'name': 'Currency',
-  'route': 'currency',
-};
 
 class Api {
   final HttpClient _httpClient = HttpClient();
-
 
   // final _url = 'http://$ip:$port/api/Stocks';
   Future<String> getStocks(String dbCode, String _url) async {
@@ -38,20 +31,37 @@ class Api {
     return jsonResponse['units'];
   }
 
-  // Future<double> convert(String category, String amount, String fromUnit, String toUnit) async {
-  //   final uri = Uri.https(_url, '/$category/convert',
-  //   {'amount': amount, 'from': fromUnit, 'to': toUnit});
+  Future<Null> postStockIns(String dbCode, String body, String _url) async {
+    // Prepare for the Post request (http)
+    var response = await http.post(
+      _url, 
+      headers: {
+        "Content-Type": "application/json",  
+        "DbCode": dbCode
+      },
+      body: body);
+    // includes datas into body
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+  }
 
-  //   final jsonResponse = await _getJson(uri);
-  //   if (jsonResponse == null || jsonResponse['status'] == null) {
-  //     print('Error Retrieving conversion.');
-  //     return null;
-  //   } else if (jsonResponse['status'] == 'error') {
-  //     print(jsonResponse['message']);
-  //     return null;
-  //   }
-  //   return jsonResponse['conversion'].toDouble();
-  // }
+  Future<Null> postMultipleStockIns(String dbCode, List<String> body, String _url) async {
+    // Prepare for the Post request (http)   
+    for(int i = 0; i < body.length; i++) {
+      try {
+        var response = await http.post(
+          _url, 
+          headers: {
+            "Content-Type": "application/json",  
+            "DbCode": dbCode
+          },
+          body: body[i]);
+        print('Response body: ${response.body}');
+      } finally {
+        _httpClient.close();
+      }
+    }
+  }
 
   Future<Map<String, dynamic>> _getJson (Uri uri) async {
     try {

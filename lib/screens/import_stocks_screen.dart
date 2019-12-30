@@ -96,8 +96,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
         _update(stockList[i].stockCode, stockList[i].stockName, stockList[i].baseUOM);
       }
     }
-
-
+    
     return stockList;
   }
 

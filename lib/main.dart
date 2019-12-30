@@ -25,6 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Mugs Stock API',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         accentColor: Colors.amber,
         primarySwatch: Colors.blue,

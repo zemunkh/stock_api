@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:retail_api/model/stockIn.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import '../helper/api.dart';
 import '../screens/home_screen.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
@@ -34,7 +38,27 @@ class _StockInTransactionState extends State<StockInTransaction> {
   String dropdownValue = '';
   String buffer = '';
   String trueVal = '';
-  // <String>['One from the world, you know it', 'Two', 'Free', 'Four']
+
+  // URL preparation function initialization
+  String ip, port, dbCode;
+  String urlStatus = 'not found';
+  String _url = '';
+
+  Future<Null> initServerUrl() async {
+    ip =  await FileManager.readProfile('ip_address');
+    port =  await FileManager.readProfile('port_number');
+    dbCode =  await FileManager.readProfile('company_name');
+    if(ip != '' && port != '' && dbCode != '') {
+      _url = 'http://$ip:$port/api/Stocks';
+    } else {
+      _url = 'https://dev-api.qne.cloud/api/StockIns';
+      dbCode = 'OUCOP7';
+    }
+    setState((){
+      urlStatus = _url;
+    });
+  }
+
 
   Future<Null> _searchStockCode(int index, String stockCode) async {
     bool isEmpty = false;
@@ -102,29 +126,75 @@ class _StockInTransactionState extends State<StockInTransaction> {
   }
 
 
-  Future<bool> _postTransaction() {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Do you want to upload the transactions?"),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('Yes'),
-            onPressed: () {
-              print('Yes clicked');
-              Navigator.of(context).pop();
-            },
-          ),
-          FlatButton(
-            child: Text('No'),
-            onPressed: () {
-              print('No clicked');
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      )
-    );
+  Future<Null> _postTransaction(DateTime date) async {
+    final api = Api();
+
+    int len = _stockInputControllers.length;
+    List<String> _bodyList = [];
+
+    List<String> _stockCodeList = [];
+    List<String> _stockNameList = [];
+    List<String> _lvl1uomList = [];
+    List<String> _lvl2uomList = [];
+
+    for(int i = 0; i < len; i++) {
+      _stockCodeList.add(_stockInputControllers[i].text);
+      _stockNameList.add(_stockNames[i]);
+      _lvl1uomList.add(_lvl1InputControllers[i].text);
+      _lvl2uomList.add(_lvl2InputControllers[i].text);
+    }
+
+    for(int i = 0; i < len; i++) {
+      Details details = Details(
+        numbering: null,
+        stock: _stockInputControllers[i].text,
+        pos: 1,
+        description: dropdownValue,
+        price: 0,
+        uom: _baseUOMs[0],
+        qty: int.parse(_lvl1InputControllers[i].text),
+        amount: 1,
+        note: null,
+        costCentre: null,
+        project: "Serdang",
+        stockLocation: "HQ",
+      );
+
+      List<Details> detail = [details];
+
+      // With API, it gathers all the data, and make the POST request to the server
+      // Have to add multiple post requests.
+
+      StockIn firstData = new StockIn(
+        stockInCode: trxNumber,
+        stockInDate: DateFormat("yyyy-MM-dd").format(date),
+        description: dropdownValue,
+        referenceNo: null,
+        title: "Test",
+        isCancelled: false,
+        notes: null,
+        costCentre: null,
+        project: "Serdang",
+        stockLocation: "HQ",
+        details: detail,
+      );
+
+      var body = jsonEncode(firstData.toJson());
+      print("Object to send: $body");
+      print("Other status: $dbCode, $_url");
+
+      _bodyList.add(body);
+      
+      // final api = Api();
+      // await api.postStockIns(dbCode, body, _url).then((_){
+      //   print("Post request is done!");
+      // });
+    }
+
+    await api.postMultipleStockIns(dbCode, _bodyList, _url).then((_){
+      print("Post requests are done!");
+    });
+    
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
@@ -268,6 +338,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
   void initState() {
     super.initState();
     setInitials();
+    initServerUrl();
   }
 
   @override
@@ -512,7 +583,32 @@ class _StockInTransactionState extends State<StockInTransaction> {
         child: MaterialButton(
           onPressed: _isButtonDisabled ? null : () {
             // gather all the information and post data to db by api lib.
-            _postTransaction();
+            return showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text("Do you want to upload the transactions?"),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Yes'),
+                    onPressed: () {
+                      print('Yes clicked');
+                      _postTransaction(createdDate).then((_) {
+                        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+                      });
+
+                    },
+                  ),
+                  FlatButton(
+                    child: Text('No'),
+                    onPressed: () {
+                      print('No clicked');
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              )
+            );
+
 
           },
           child: Text(
