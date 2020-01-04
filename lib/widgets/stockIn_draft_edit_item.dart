@@ -716,7 +716,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
               '$header',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold
               ),

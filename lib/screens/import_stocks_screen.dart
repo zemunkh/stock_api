@@ -131,7 +131,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
 
     // read all the json file, it shows the number of downloaded items
     final status = Container(
-      width: 80,
+      width: 200,
       margin: const EdgeInsets.all(10),
       padding: const EdgeInsets.all(10),
       decoration: ShapeDecoration(

@@ -36,7 +36,7 @@ class FileManager {
     final prefs = await SharedPreferences.getInstance();
     String profile = prefs.getString(key);
     if(profile == null) {
-      return 'Empty';
+      return '';
     }
     return profile;
   }
@@ -74,8 +74,8 @@ class FileManager {
     List<String> descripts = prefs.getStringList('stock_descriptions');
     print('Descriptions List: $descripts');
     if(descripts == null) {
-      descripts = [];
-      return null;
+      descripts = ['1. Empty', '2. Empty', '3. Empty', '4. Empty', '5. Empty', '6. Empty', '7. Empty', '8. Empty'];
+      return descripts;
     } else {
       return descripts;
     }
@@ -138,7 +138,8 @@ class FileManager {
   static Future<int> getTrxNumbering() async {
     final prefs = await SharedPreferences.getInstance();
     int number = prefs.getInt('trx_numbering');
-    if(number == null) {
+    print("Number: $number \r\n");
+    if(number == null || number == 0) {
       return 0;
     }
     return number;

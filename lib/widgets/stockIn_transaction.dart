@@ -292,22 +292,23 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
 
     _descripts = await FileManager.readDescriptions();
-    if(_descripts.isEmpty || _descripts == null) {
-      setState(() {
-        dropdownValue = 'Not Selected';
-      });
-      for(int i = 0; i < _descripts.length; i++) {
-        setState(() {
-          // _descriptionControllers[i].text = 'NaN';
-          _descriptions[i] = '#$i. Not Available';
-        });
-      }
-    } else {
+    print("Descripts: $_descripts");
+    // if(_descripts.isEmpty || _descripts == null) {
+    //   setState(() {
+    //     dropdownValue = 'Not Selected';
+    //   });
+    //   for(int i = 0; i < _descripts.length; i++) {
+    //     setState(() {
+    //       // _descriptionControllers[i].text = 'NaN';
+    //       _descriptions[i] = '#$i. Not Available';
+    //     });
+    //   }
+    // } else {
       setState(() {
         dropdownValue = _descripts[0];
         _descriptions = _descripts;
       });
-    }
+    // }
 
     setState(() {
       if(numbering < 10) {
@@ -690,7 +691,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               '$header',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold
               ),
