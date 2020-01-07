@@ -21,7 +21,6 @@ class Api {
     return response.body;
   }
 
-
   Future<Null> postStockIns(String dbCode, String body, String _url) async {
     // Prepare for the Post request (http)
     var response = await http.post(

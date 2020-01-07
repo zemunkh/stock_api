@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../model/uoms.dart';
 import '../screens/home_screen.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import '../screens/stockIn_draft_screen.dart';
@@ -30,11 +31,15 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   List<FocusNode> _lvl2InputNodes = new List();
 
   String trxNumber = '';
+  String stockId = '';
 
   String statusTime = '';
 
-  List<String> _baseUOMs = [];
+  List<String> _lvl1uomList = [];
+  List<String> _lvl2uomList = [];
   List<String> _stockNames = [];
+  List<Uoms> uomList = [];
+  List<Details> detail = [];
 
   DateTime draftCreatedAt;
 
@@ -42,11 +47,9 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   List<String> _otherList = [];
   List<String> _stockCodeList = [];
   List<String> _stockNameList = [];
-  List<String> _lvl1uomList = [];
-  List<String> _lvl2uomList = []; 
-  List<String> _baseUomsList = [];
 
   bool postClicked = false;
+  List<bool> _isUOMEnabledList = [false];
   // Dropdown menu variables
   List<String> _descriptions = [];
   List<String> _descripts = [];
@@ -63,9 +66,9 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     port =  await FileManager.readProfile('port_number');
     dbCode =  await FileManager.readProfile('company_name');
     if(ip != '' && port != '' && dbCode != '') {
-      _url = 'http://$ip:$port/api/StocksIns';
+      _url = 'http://$ip:$port/api/';
     } else {
-      _url = 'https://dev-api.qne.cloud/api/StockIns';
+      _url = 'https://dev-api.qne.cloud/api/';
       dbCode = 'OUCOP7';
     }
     setState((){
@@ -76,26 +79,46 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   Future<Null> _searchStockCode(int index, String stockCode) async {
     bool isEmpty = false;
     List<Map> stockData = await dbHelper.queryAllRows();
+    final api = Api();
 
-    stockData.forEach((row){
+    stockData.forEach((row) async {
       if(row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         _stockNames[index] = (row["stockName"]);
-        _baseUOMs[index] = (row["baseUOM"]);
+        // _lvl1_baseUOM[index] = (row["baseUOM"]);
 
         isEmpty = isEmpty || true;
         print('I got this :)');
         // _lvl1InputControllers[index].text = row["baseUOM"];
         
         // this will build baseUOM lvl1, lvl2 widgets
+        stockId = row["stockId"];
+        //Fetching Unit of Measurements for the Stock.
+        var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
+        var receivedData = json.decode(data);
+        uomList = receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
+        print("Length UOMs: ${uomList.length}");
+        setState(() {
+          if(uomList.length > 1) {
+            if(uomList[0].isBaseUOM == true) {
+              _lvl1uomList[index] = uomList[0].uomCode;
+              _lvl2uomList[index] = uomList[1].uomCode;
+            } else if(uomList[1].isBaseUOM == true){
+              _lvl1uomList[index] = uomList[1].uomCode;
+              _lvl2uomList[index] = uomList[0].uomCode;
+            }
+            _isUOMEnabledList[index] = true;
+            // enable both lvl1 and lvl2 input fields
+          } else {
+            _lvl1uomList[index] = uomList[0].uomCode;
+            _lvl2uomList[index] = '';
+            // disable lvl2 input field
+            _isUOMEnabledList[index] = false;
+          }         
+        });
       } else {
         isEmpty = isEmpty || false;
       }
-    });
-
-    setState(() {
-      _isButtonDisabled = !isEmpty;
-      _isDraftButtonDisabled = !isEmpty;
     });
   }
 
@@ -147,24 +170,24 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     List<String> _stockCodeList = [];
     List<String> _stockNameList = [];
-    List<String> _lvl1uomList = [];
-    List<String> _lvl2uomList = [];
+    List<String> _uomValueList1 = [];
+    List<String> _uomValueList2 = [];
 
     for(int i = 0; i < len; i++) {
       _stockCodeList.add(_stockInputControllers[i].text);
       _stockNameList.add(_stockNames[i]);
-      _lvl1uomList.add(_lvl1InputControllers[i].text);
-      _lvl2uomList.add(_lvl2InputControllers[i].text);
+      _uomValueList1.add(_lvl1InputControllers[i].text);
+      _uomValueList2.add(_lvl2InputControllers[i].text);
     }
 
     for(int i = 0; i < len; i++) {
-      Details details = Details(
+      Details details1 = Details(
         numbering: null,
         stock: _stockInputControllers[i].text,
-        pos: 1,
-        description: dropdownValue,
+        pos: 2,
+        description: dropdownValue.split('. ')[1],
         price: 0,
-        uom: _baseUOMs[0],
+        uom: _lvl1uomList[i],
         qty: int.parse(_lvl1InputControllers[i].text),
         amount: 1,
         note: null,
@@ -173,7 +196,28 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         stockLocation: "HQ",
       );
 
-      List<Details> detail = [details];
+      Details details2 = Details(
+        numbering: null,
+        stock: _stockInputControllers[i].text,
+        pos: 1,
+        description: dropdownValue.split('. ')[1],
+        price: 0,
+        uom: _lvl2uomList[i], // ??? Questionable
+        qty: _lvl2InputControllers[i].text == '' ? 0 : int.parse(_lvl2InputControllers[i].text),
+        amount: 1,
+        note: null,
+        costCentre: null,
+        project: "Serdang",
+        stockLocation: "HQ",
+      );
+      
+      if (_lvl1InputControllers[i].text != '' && _lvl2InputControllers[i].text != '') {
+        detail = [details1, details2];
+      } else if(_lvl1InputControllers[i].text != '') {
+        detail = [details1];
+      } else {
+        print("Empty #$i");
+      }
 
       // With API, it gathers all the data, and make the POST request to the server
       // Have to add multiple post requests.
@@ -181,7 +225,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       StockIn firstData = new StockIn(
         stockInCode: trxNumber,
         stockInDate: DateFormat("yyyy-MM-dd").format(date),
-        description: dropdownValue,
+        description: dropdownValue.split('. ')[1],
         referenceNo: null,
         title: "Test",
         isCancelled: false,
@@ -194,21 +238,17 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
       var body = jsonEncode(firstData.toJson());
       print("Object to send: $body");
-      print("Other status: $dbCode, $_url");
+      print("Other status: $dbCode, ${_url}StockIns");
 
       _bodyList.add(body);
-      
-      // final api = Api();
-      // await api.postStockIns(dbCode, body, _url).then((_){
-      //   print("Post request is done!");
-      // });
     }
 
-    await api.postMultipleStockIns(dbCode, _bodyList, _url).then((_){
+    await api.postMultipleStockIns(dbCode, _bodyList, '${_url}StockIns').then((_){
       print("Post requests are done!");
     });
     
   }
+
 
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
@@ -216,15 +256,15 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     List<String> _stockCodeList = [];
     List<String> _stockNameList = [];
-    List<String> _lvl1uomList = [];
-    List<String> _lvl2uomList = [];
+    List<String> _uomValueList1 = [];
+    List<String> _uomValueList2 = [];
     List<String> _otherList = [];
 
     for(int i = 0; i < len; i++) {
       _stockCodeList.add(_stockInputControllers[i].text);
       _stockNameList.add(_stockNames[i]);
-      _lvl1uomList.add(_lvl1InputControllers[i].text);
-      _lvl2uomList.add(_lvl2InputControllers[i].text);
+      _uomValueList1.add(_lvl1InputControllers[i].text);
+      _uomValueList2.add(_lvl2InputControllers[i].text);
     }
 
     _otherList.add(draftCreatedAt.toString());
@@ -242,10 +282,11 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     FileManager.saveDraft('draft_stockCode_$index', _stockCodeList);
     FileManager.saveDraft('draft_stockName_$index', _stockNameList);
-    FileManager.saveDraft('draft_lvl1uomList_$index', _lvl1uomList);
-    FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
+    FileManager.saveDraft('draft_lvl1uom_$index', _uomValueList1);
+    FileManager.saveDraft('draft_lvl2uom_$index', _uomValueList2);
+    FileManager.saveDraft('draft_lvl1uomCode_$index', _lvl1uomList);
+    FileManager.saveDraft('draft_lvl2uomCode_$index', _lvl2uomList);
     FileManager.saveDraft('draft_other_$index', _otherList);
-    FileManager.saveDraft('draft_baseUoms_$index', _baseUOMs);
 
   }
 
@@ -260,7 +301,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             onPressed: () {
               print('Yes clicked');
               setState(() {
-                _baseUOMs.removeAt(index);
+                _lvl1uomList.removeAt(index);
+                _lvl2uomList.removeAt(index);
                 _stockNames.removeAt(index);
                 _stockInputControllers.removeAt(index);
                 _lvl1InputControllers.removeAt(index);
@@ -290,16 +332,20 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     );
   }
 
+
   Future<Null> setInitials() async {
+    List<String> _uomValueList1 = [];
+    List<String> _uomValueList2 = [];
     // =============== GET SELECTED DRAFT LIST VALUE ============== //
     int draftIndex = await FileManager.getSelectedIndex();
     _otherList = await FileManager.readDraft('draft_other_$draftIndex');
     
     _stockCodeList = await FileManager.readDraft('draft_stockCode_$draftIndex');
     _stockNameList = await FileManager.readDraft('draft_stockName_$draftIndex');
-    _lvl1uomList = await FileManager.readDraft('draft_lvl1uomList_$draftIndex');
-    _lvl2uomList = await FileManager.readDraft('draft_lvl2uomList_$draftIndex');
-    _baseUomsList = await FileManager.readDraft('draft_baseUoms_$draftIndex');
+    _uomValueList1 = await FileManager.readDraft('draft_lvl1uom_$draftIndex');
+    _uomValueList2 = await FileManager.readDraft('draft_lvl2uom_$draftIndex');
+    _lvl1uomList = await FileManager.readDraft('draft_lvl1uomCode_$draftIndex');
+    _lvl2uomList = await FileManager.readDraft('draft_lvl2uomCode_$draftIndex');
 
     _descripts = await FileManager.readDescriptions();
     if(_descripts.isEmpty || _descripts == null) {
@@ -332,19 +378,17 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         _lvl1InputControllers.add(new TextEditingController());
         _lvl2InputControllers.add(new TextEditingController());
         _stockNames.add('');
-        _baseUOMs.add('');
 
         // Complete & Draft button enabling logic is here
-        if(_stockCodeList[i] != '' && (_lvl1uomList[i] != '' || _lvl1uomList[i] != '') && _stockNameList[i] != 'StockCode' && _baseUomsList[i] != 'Unit') {
+        if(_stockCodeList[i] != '' && (_lvl1uomList[i] != '' || _lvl1uomList[i] != '') && _stockNameList[i] != 'StockCode' && _lvl1uomList[i] != 'Unit' && _lvl2uomList[i] != 'Unit') {
           _isButtonDisabled = false;
           print('All requirements are filled');
         }
 
         _stockInputControllers[i].text = _stockCodeList[i];
-        _lvl1InputControllers[i].text = _lvl1uomList[i];
-        _lvl2InputControllers[i].text = _lvl2uomList[i];
+        _lvl1InputControllers[i].text = _uomValueList1[i];
+        _lvl2InputControllers[i].text = _uomValueList2[i];
         _stockNames[i] = _stockNameList[i];
-        _baseUOMs[i] = _baseUomsList[i];
 
         _stockInputNodes.add(new FocusNode());
         _lvl1InputNodes.add(new FocusNode());
@@ -413,7 +457,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '  lvl1: ${_baseUOMs[index]}',
+                    hintText: '  lvl1: ${_lvl1uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -436,7 +480,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
           Expanded(
             flex: 1,
             child: Text(
-              _baseUOMs[index],
+              _lvl1uomList[index],
               textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 14, 
@@ -460,7 +504,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText:'  lvl2: ${_baseUOMs[index]}',
+                    hintText:'  lvl2: ${_lvl2uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83), 
                       fontWeight: FontWeight.w200,
@@ -469,6 +513,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
+                  enabled: _isUOMEnabledList[index],
                   autofocus: false,
                   controller: _lvl2Controller,
                   focusNode: _lvl2Node,
@@ -483,7 +528,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
           Expanded(
             flex: 1,
             child: Text(
-              _baseUOMs[index],
+              _lvl2uomList[index],
               textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 14, 
@@ -575,7 +620,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         child: MaterialButton(
           onPressed: () {
             setState(() {
-              _baseUOMs.add('');
+              _lvl1uomList.add('');
+              _lvl2uomList.add('');
               _stockNames.add('');
               _stockInputControllers.add(new TextEditingController());
               _lvl1InputControllers.add(new TextEditingController());

@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:retail_api/model/stockIn.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import '../model/stockIn.dart';
+import '../model/uoms.dart';
 import '../helper/api.dart';
 import '../screens/home_screen.dart';
 import '../helper/database_helper.dart';
@@ -28,10 +29,13 @@ class _StockInTransactionState extends State<StockInTransaction> {
   List<FocusNode> _lvl2InputNodes = new List();
 
   String trxNumber = '';
+  String stockId = '';
 
-  List<String> _baseUOMs = [];
+  List<String> _lvl1uomList = [];
+  List<String> _lvl2uomList = [];
   List<String> _stockNames = [];
-
+  List<Uoms> uomList = [];
+  List<Details> detail = [];
   // Dropdown menu variables
   List<String> _descriptions = [];
   List<String> _descripts = [];
@@ -40,42 +44,65 @@ class _StockInTransactionState extends State<StockInTransaction> {
   String trueVal = '';
 
   bool postClicked = false;
+  List<bool> _isUOMEnabledList = [false];
   // URL preparation function initialization
   String ip, port, dbCode;
-  String urlStatus = 'not found';
   String _url = '';
+
 
   Future<Null> initServerUrl() async {
     ip =  await FileManager.readProfile('ip_address');
     port =  await FileManager.readProfile('port_number');
     dbCode =  await FileManager.readProfile('company_name');
     if(ip != '' && port != '' && dbCode != '') {
-      _url = 'http://$ip:$port/api/StocksIns';
+      _url = 'http://$ip:$port/api/';
     } else {
-      _url = 'https://dev-api.qne.cloud/api/StockIns';
+      _url = 'https://dev-api.qne.cloud/api/';
       dbCode = 'OUCOP7';
     }
-    setState((){
-      urlStatus = _url;
-    });
   }
 
 
   Future<Null> _searchStockCode(int index, String stockCode) async {
     bool isEmpty = false;
     List<Map> stockData = await dbHelper.queryAllRows();
+    final api = Api();
 
-    stockData.forEach((row){
+    stockData.forEach((row) async {
       if(row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         _stockNames[index] = (row["stockName"]);
-        _baseUOMs[index] = (row["baseUOM"]);
+        // _lvl1_baseUOM[index] = (row["baseUOM"]);
 
         isEmpty = isEmpty || true;
         print('I got this :)');
         // _lvl1InputControllers[index].text = row["baseUOM"];
-        
+
         // this will build baseUOM lvl1, lvl2 widgets
+        stockId = row["stockId"];
+        //Fetching Unit of Measurements for the Stock.
+        var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
+        var receivedData = json.decode(data);
+        uomList = receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
+        print("Length UOMs: ${uomList.length}");
+        setState(() {
+          if(uomList.length > 1) {
+            if(uomList[0].isBaseUOM == true) {
+              _lvl1uomList[index] = uomList[0].uomCode;
+              _lvl2uomList[index] = uomList[1].uomCode;
+            } else if(uomList[1].isBaseUOM == true){
+              _lvl1uomList[index] = uomList[1].uomCode;
+              _lvl2uomList[index] = uomList[0].uomCode;
+            }
+            _isUOMEnabledList[index] = true;
+            // enable both lvl1 and lvl2 input fields
+          } else {
+            _lvl1uomList[index] = uomList[0].uomCode;
+            _lvl2uomList[index] = '';
+            // disable lvl2 input field
+            _isUOMEnabledList[index] = false;
+          }
+        });
       } else {
         isEmpty = isEmpty || false;
       }
@@ -86,7 +113,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     });
   }
 
-  
+
   Future<Null> _stockInEventListener(int index, TextEditingController _controller) async {
     int length = _stockInputControllers.length;
 
@@ -135,14 +162,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     List<String> _stockCodeList = [];
     List<String> _stockNameList = [];
-    List<String> _lvl1uomList = [];
-    List<String> _lvl2uomList = [];
+    List<String> _uomValueList1 = [];
+    List<String> _uomValueList2 = [];
 
     for(int i = 0; i < len; i++) {
       _stockCodeList.add(_stockInputControllers[i].text);
       _stockNameList.add(_stockNames[i]);
-      _lvl1uomList.add(_lvl1InputControllers[i].text);
-      _lvl2uomList.add(_lvl2InputControllers[i].text);
+      _uomValueList1.add(_lvl1InputControllers[i].text);
+      _uomValueList2.add(_lvl2InputControllers[i].text);
     }
 
     for(int i = 0; i < len; i++) {
@@ -150,9 +177,9 @@ class _StockInTransactionState extends State<StockInTransaction> {
         numbering: null,
         stock: _stockInputControllers[i].text,
         pos: 2,
-        description: dropdownValue,
+        description: dropdownValue.split('. ')[1],
         price: 0,
-        uom: _baseUOMs[0],
+        uom: _uomValueList1[i],
         qty: int.parse(_lvl1InputControllers[i].text),
         amount: 1,
         note: null,
@@ -165,10 +192,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
         numbering: null,
         stock: _stockInputControllers[i].text,
         pos: 1,
-        description: dropdownValue,
+        description: dropdownValue.split('. ')[1],
         price: 0,
-        uom: _baseUOMs[1], // ??? Questionable
-        qty: int.parse(_lvl2InputControllers[i].text),
+        uom: _uomValueList2[i], // ??? Questionable
+        qty: _lvl2InputControllers[i].text == '' ? 0 : int.parse(_lvl2InputControllers[i].text),
         amount: 1,
         note: null,
         costCentre: null,
@@ -176,7 +203,13 @@ class _StockInTransactionState extends State<StockInTransaction> {
         stockLocation: "HQ",
       );
 
-      List<Details> detail = [details1];
+      if (_lvl1InputControllers[i].text != '' && _lvl2InputControllers[i].text != '') {
+        detail = [details1, details2];
+      } else if(_lvl1InputControllers[i].text != '') {
+        detail = [details1];
+      } else {
+        print("Empty #$i");
+      }
 
       // With API, it gathers all the data, and make the POST request to the server
       // Have to add multiple post requests.
@@ -184,7 +217,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
       StockIn firstData = new StockIn(
         stockInCode: trxNumber,
         stockInDate: DateFormat("yyyy-MM-dd").format(date),
-        description: dropdownValue,
+        description: dropdownValue.split('. ')[1],
         referenceNo: null,
         title: "Test",
         isCancelled: false,
@@ -197,20 +230,20 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
       var body = jsonEncode(firstData.toJson());
       print("Object to send: $body");
-      print("Other status: $dbCode, $_url");
+      print("Other status: $dbCode, ${_url}StockIns");
 
       _bodyList.add(body);
-      
+
       // final api = Api();
       // await api.postStockIns(dbCode, body, _url).then((_){
       //   print("Post request is done!");
       // });
     }
 
-    await api.postMultipleStockIns(dbCode, _bodyList, _url).then((_){
+    await api.postMultipleStockIns(dbCode, _bodyList, '${_url}StockIns').then((_){
       print("Post requests are done!");
     });
-    
+
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
@@ -218,15 +251,15 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     List<String> _stockCodeList = [];
     List<String> _stockNameList = [];
-    List<String> _lvl1uomList = [];
-    List<String> _lvl2uomList = [];
+    List<String> _uomValueList1 = [];
+    List<String> _uomValueList2 = [];
     List<String> _otherList = [];
 
     for(int i = 0; i < len; i++) {
       _stockCodeList.add(_stockInputControllers[i].text);
       _stockNameList.add(_stockNames[i]);
-      _lvl1uomList.add(_lvl1InputControllers[i].text);
-      _lvl2uomList.add(_lvl2InputControllers[i].text);
+      _uomValueList1.add(_lvl1InputControllers[i].text);
+      _uomValueList2.add(_lvl2InputControllers[i].text);
     }
 
     _otherList.add(createdDate.toString());
@@ -242,10 +275,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     FileManager.saveDraft('draft_stockCode_$index', _stockCodeList);
     FileManager.saveDraft('draft_stockName_$index', _stockNameList);
-    FileManager.saveDraft('draft_lvl1uomList_$index', _lvl1uomList);
-    FileManager.saveDraft('draft_lvl2uomList_$index', _lvl2uomList);
+    FileManager.saveDraft('draft_lvl1uom_$index', _uomValueList1);
+    FileManager.saveDraft('draft_lvl2uom_$index', _uomValueList2);
+    FileManager.saveDraft('draft_lvl1uomCode_$index', _lvl1uomList);
+    FileManager.saveDraft('draft_lvl2uomCode_$index', _lvl2uomList);
     FileManager.saveDraft('draft_other_$index', _otherList);
-    FileManager.saveDraft('draft_baseUoms_$index', _baseUOMs);
+    // FileManager.saveDraft('draft_baseUoms_$index', _lvl1uomList);
+    // Save the UOM type name to the list as draft_baseUomsLvl1_$index
+
   }
 
   Future<bool> _deleteRow(int index) {
@@ -259,7 +296,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
             onPressed: () {
               print('Yes clicked');
               setState(() {
-                _baseUOMs.removeAt(index);
+                _lvl1uomList.removeAt(index);
+                _lvl2uomList.removeAt(index);
                 _stockNames.removeAt(index);
                 _stockInputControllers.removeAt(index);
                 _lvl1InputControllers.removeAt(index);
@@ -308,22 +346,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     _descripts = await FileManager.readDescriptions();
     print("Descripts: $_descripts");
-    // if(_descripts.isEmpty || _descripts == null) {
-    //   setState(() {
-    //     dropdownValue = 'Not Selected';
-    //   });
-    //   for(int i = 0; i < _descripts.length; i++) {
-    //     setState(() {
-    //       // _descriptionControllers[i].text = 'NaN';
-    //       _descriptions[i] = '#$i. Not Available';
-    //     });
-    //   }
-    // } else {
-      setState(() {
-        dropdownValue = _descripts[0];
-        _descriptions = _descripts;
-      });
-    // }
+
+    setState(() {
+      dropdownValue = _descripts[0];
+      _descriptions = _descripts;
+    });
 
     setState(() {
       if(numbering < 10) {
@@ -334,7 +361,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
         trxNumber = 'SIN${DateFormat("yyMMdd").format(currentDate)}/$numbering';
       }
 
-      _baseUOMs.add('Unit');
+      _lvl1uomList.add('Unit');
+      _lvl2uomList.add('Unit');
       _stockNames.add('StockCode');
       _stockInputControllers.add(new TextEditingController());
       _lvl1InputControllers.add(new TextEditingController());
@@ -385,7 +413,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
           elevation: 2,
         ),
       );
-    } 
+    }
 
     Widget _stockMeasurement(int index, TextEditingController _lvl1Controller, TextEditingController _lvl2Controller, FocusNode _lvl1Node, FocusNode _lvl2Node) {
       return Row(
@@ -396,19 +424,19 @@ class _StockInTransactionState extends State<StockInTransaction> {
             child: Padding(
               padding: EdgeInsets.all(2.0),
               child: Container(
-                height: 40,
+                height: 30,
                 child: TextFormField(
                     style: TextStyle(
-                    fontSize: 12, 
+                    fontSize: 12,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '  lvl1: ${_baseUOMs[index]}',
+                    hintText: '  lvl1: ${_lvl1uomList[index]}',
                     hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
+                      color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
                     ),
                     border: OutlineInputBorder(
@@ -429,10 +457,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
           Expanded(
             flex: 1,
             child: Text(
-              _baseUOMs[index],
+              _lvl1uomList[index],
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 14, 
+                fontSize: 14,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
@@ -443,25 +471,26 @@ class _StockInTransactionState extends State<StockInTransaction> {
             child: Padding(
               padding: const EdgeInsets.all(2.0),
               child: Container(
-                height: 40,
+                height: 30,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 12, 
+                    fontSize: 12,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration.collapsed(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText:'  lvl2: ${_baseUOMs[index]}',
+                    hintText:'  lvl2: ${_lvl2uomList[index]}',
                     hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
+                      color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
+                  enabled: _isUOMEnabledList[index],
                   autofocus: false,
                   controller: _lvl2Controller,
                   focusNode: _lvl2Node,
@@ -476,10 +505,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
           Expanded(
             flex: 1,
             child: Text(
-              _baseUOMs[index],
+              _lvl2uomList[index],
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 14, 
+                fontSize: 14,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
@@ -492,7 +521,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
         ],
       );
     }
-    
+
     Widget _stockInput(int index, TextEditingController _controller, FocusNode _stockNode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -503,7 +532,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               'StockIn: ${index + 1}',
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 14, 
+                fontSize: 14,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
@@ -517,7 +546,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                 height: 40,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 14,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -526,7 +555,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                     fillColor: Colors.white,
                     hintText: 'Stock code',
                     hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
+                      color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
                     ),
                     border: OutlineInputBorder(
@@ -536,8 +565,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
                       color: Colors.yellowAccent,
                     ),
                     suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
+                      icon: Icon(EvaIcons.close,
+                        color: Colors.blueAccent,
                         size: 24,
                       ),
                       onPressed: () {
@@ -568,8 +597,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
         child: MaterialButton(
           onPressed: () {
             setState(() {
-              _baseUOMs.add('');
+              _lvl1uomList.add('');
+              _lvl2uomList.add('');
               _stockNames.add('');
+              _isUOMEnabledList.add(false);
               _stockInputControllers.add(new TextEditingController());
               _lvl1InputControllers.add(new TextEditingController());
               _lvl2InputControllers.add(new TextEditingController());
@@ -600,36 +631,75 @@ class _StockInTransactionState extends State<StockInTransaction> {
         child: MaterialButton(
           onPressed: _isButtonDisabled ? null : () {
             // gather all the information and post data to db by api lib.
-            return showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text("Do you want to upload the transactions?"),
-                actions: <Widget>[
-                  FlatButton(
-                    child: Text('Yes'),
-                    onPressed: () {
-                      /// gggg
-                      if(!postClicked) {
-                        print('Yes clicked');
-                        _postTransaction(createdDate).then((_) {
-                          Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
-                        });
-                        setState(() {
-                          postClicked = true;
-                        });
-                      }
-                    },
-                  ),
-                  FlatButton(
-                    child: Text('No'),
-                    onPressed: () {
-                      print('No clicked');
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              )
-            );
+            /// Check process and post Transaction
+            bool _completed = true;
+            int index = 0;
+            _stockInputControllers.forEach((controller) async {
+              if (_isUOMEnabledList[index] == false) {
+                if(controller.text != '' && _lvl1InputControllers[index].text != '') {
+                  _completed = _completed && true;
+                } else {
+                  _completed = false;
+                }
+              } else {
+                if(controller.text != ''
+                  && _lvl1InputControllers[index].text != ''
+                  && _lvl2InputControllers[index].text != '') {
+                  _completed = _completed && true;
+                } else {
+                  _completed = false;
+                }
+              }
+              index++;
+            });
+
+            if(_completed) {
+              return showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text("Do you want to upload the transactions?"),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Yes'),
+                      onPressed: () {
+                        if(!postClicked) {
+                          print('Yes clicked');
+                          _postTransaction(createdDate).then((_) {
+                            Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+                          });
+                          setState(() {
+                            postClicked = true;
+                          });
+                        }
+                      },
+                    ),
+                    FlatButton(
+                      child: Text('No'),
+                      onPressed: () {
+                        print('No clicked');
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                )
+              );
+            } else {
+              return showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text("Please fill all input fieds"),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Okay'),
+                      onPressed: () {
+                        print('Ok clicked');
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                )
+              );
+            }
           },
           child: Text(
             'Complete Trx',
@@ -795,53 +865,60 @@ class _StockInTransactionState extends State<StockInTransaction> {
         height: 350,
         width: 400,
         child: child,
-      );  
+      );
     }
 
-    final transaction = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        statusBar(DateFormat("yyyy/MM/dd HH:mm:ss").format(createdDate)),
-        // descriptionMenu,
-        // stockParameters,
-        _descriptionMenu(context, 'Description:'),
-        new Divider(height: 20.0, color: Colors.black87,),
 
-        buildContainer(
-          ListView.builder(
-            itemCount: _stockInputControllers?.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Container(
-                padding: const EdgeInsets.all(4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    _stockInput(index, _stockInputControllers[index], _stockInputNodes[index]),
-                    Text('Stock Name: ${_stockNames[index]}'),
-                    _stockMeasurement(index, _lvl1InputControllers[index], _lvl2InputControllers[index], _lvl1InputNodes[index], _lvl2InputNodes[index]),
-                    new Divider(height: 15.0,color: Colors.black87,),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        addStockInputButton,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    final transaction = GestureDetector(
+      onTap: () {
+        FocusScope.of(context).requestFocus(new FocusNode());
+      },
+      child: Container(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Expanded(
-              child: postButton,
+            statusBar(DateFormat("yyyy/MM/dd HH:mm:ss").format(createdDate)),
+            // descriptionMenu,
+            // stockParameters,
+            _descriptionMenu(context, 'Description:'),
+            new Divider(height: 20.0, color: Colors.black87,),
+
+            buildContainer(
+              ListView.builder(
+                itemCount: _stockInputControllers?.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        _stockInput(index, _stockInputControllers[index], _stockInputNodes[index]),
+                        Text('Stock Name: ${_stockNames[index]}'),
+                        _stockMeasurement(index, _lvl1InputControllers[index], _lvl2InputControllers[index], _lvl1InputNodes[index], _lvl2InputNodes[index]),
+                        new Divider(height: 15.0,color: Colors.black87,),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-            Expanded(
-              child: _saveDraftButton(context),
-            )
+            addStockInputButton,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Expanded(
+                  child: postButton,
+                ),
+                Expanded(
+                  child: _saveDraftButton(context),
+                )
+              ],
+            ),
           ],
         ),
-      ],
+      ),
     );
 
-    
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
