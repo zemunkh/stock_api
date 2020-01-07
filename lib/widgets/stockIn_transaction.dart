@@ -146,10 +146,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
     }
 
     for(int i = 0; i < len; i++) {
-      Details details = Details(
+      Details details1 = Details(
         numbering: null,
         stock: _stockInputControllers[i].text,
-        pos: 1,
+        pos: 2,
         description: dropdownValue,
         price: 0,
         uom: _baseUOMs[0],
@@ -161,7 +161,22 @@ class _StockInTransactionState extends State<StockInTransaction> {
         stockLocation: "HQ",
       );
 
-      List<Details> detail = [details];
+      Details details2 = Details(
+        numbering: null,
+        stock: _stockInputControllers[i].text,
+        pos: 1,
+        description: dropdownValue,
+        price: 0,
+        uom: _baseUOMs[1], // ??? Questionable
+        qty: int.parse(_lvl2InputControllers[i].text),
+        amount: 1,
+        note: null,
+        costCentre: null,
+        project: "Serdang",
+        stockLocation: "HQ",
+      );
+
+      List<Details> detail = [details1];
 
       // With API, it gathers all the data, and make the POST request to the server
       // Have to add multiple post requests.
@@ -686,7 +701,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
       return Row(
         children: <Widget>[
           Expanded(
-            flex: 3,
+            flex: 4,
             child: Text(
               '$header',
               textAlign: TextAlign.center,
@@ -698,7 +713,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             ),
           ),
           Expanded(
-            flex: 7,
+            flex: 6,
             child: Padding(
               padding: const EdgeInsets.all(3.0),
               child: Container(

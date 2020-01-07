@@ -81,7 +81,7 @@ class MainDrawer extends StatelessWidget {
             new Divider(height: 15.0,color: Colors.black87,),
 
             buildListTile(
-              'Update StockIns', 
+              'Update Stocks', 
               EvaIcons.syncOutline,
               () {
                 Navigator.of(context).pushReplacementNamed(ImportStocksScreen.routeName);

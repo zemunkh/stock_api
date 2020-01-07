@@ -12,6 +12,7 @@ class DatabaseHelper {
   static final table = 'stock_table';
 
   static final columnId = 'id';
+  static final columnStockId = 'stockId'; // to fetch UOMs data
   static final columnStockCode = 'stockCode';
   static final columnStockName = 'stockName';
   static final columnBaseUOM = 'baseUOM';
@@ -45,6 +46,7 @@ class DatabaseHelper {
     await db.execute('''
           create table $table (
             $columnId INTEGER PRIMARY KEY,
+            $columnStockId TEXT NOT NULL,
             $columnStockCode TEXT NOT NULL,
             $columnStockName TEXT NOT NULL,
             $columnBaseUOM TEXT NOT NULL)

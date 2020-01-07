@@ -51,9 +51,10 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
     initProfileData();
   }
 
-  void _insert(String stockCode, String stockName, String baseUOM) async {
+  void _insert(String stockId, String stockCode, String stockName, String baseUOM) async {
     // row to insert
     Map<String, dynamic> row = {
+      DatabaseHelper.columnStockId : stockId,
       DatabaseHelper.columnStockCode  : stockCode,
       DatabaseHelper.columnStockName  : stockName,
       DatabaseHelper.columnBaseUOM  : baseUOM
@@ -62,9 +63,10 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
     print('inserted row id: $id');
   }
 
-  void _update(String stockCode, String stockName, String baseUOM) async {
+  void _update(String stockId, String stockCode, String stockName, String baseUOM) async {
     // row to update
     Map<String, dynamic> row = {
+      DatabaseHelper.columnStockId : stockId,
       DatabaseHelper.columnStockCode  : stockCode,
       DatabaseHelper.columnStockName  : stockName,
       DatabaseHelper.columnBaseUOM  : baseUOM
@@ -86,14 +88,14 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
     if(len == 0) {
       for(int i = 0; i < stockList.length; i++) {
         print('Saving Stock name: ${stockList[i].stockName}');
-        _insert(stockList[i].stockCode, stockList[i].stockName, stockList[i].baseUOM);
+        _insert(stockList[i].id, stockList[i].stockCode, stockList[i].stockName, stockList[i].baseUOM);
       }
       FileManager.setStockLength(stockList.length);
     } else {
       // update the db by response.body
       for(int i = 0; i < stockList.length; i++) {
         print('Updating Stocks: ${stockList[i].stockName}');
-        _update(stockList[i].stockCode, stockList[i].stockName, stockList[i].baseUOM);
+        _update(stockList[i].id, stockList[i].stockCode, stockList[i].stockName, stockList[i].baseUOM);
       }
     }
     
@@ -213,7 +215,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
         key: _scaffoldKey,
         appBar: AppBar(
           title: Text(
-            'Import StockIns',
+            'Import Stocks',
           ),
           backgroundColor: Style.Colors.mainAppBar,
         ),

@@ -258,7 +258,7 @@ class SettingScreenState extends State<SettingScreen> {
       );
     }  
     
-    Widget _descriptionInput(BuildContext context, TextEditingController _controller, FocusNode _focusNode, index) {
+    Widget _descriptionInput(BuildContext context, TextEditingController _controller, FocusNode __focusNode, index) {
       return Padding(
         padding: const EdgeInsets.all(2.0),
         child: Container(
@@ -282,11 +282,11 @@ class SettingScreenState extends State<SettingScreen> {
                 borderRadius: BorderRadius.circular(5.0),
               ),
             ),
-            autofocus: true,
+            autofocus: false,
             controller: _controller,
-            focusNode: _focusNode,
+            focusNode: __focusNode,
             onTap: () {
-              _clearTextController(context, _controller, _focusNode);
+              _focusNode(context, __focusNode);
             },
           ),
         ),

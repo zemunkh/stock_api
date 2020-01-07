@@ -21,15 +21,6 @@ class Api {
     return response.body;
   }
 
-  Future<List> getUnits(String stockNum) async {
-    final uri = Uri.https('http://qne.cloud/api/StockIns', '/$stockNum');
-    final jsonResponse = await _getJson(uri);
-    if(jsonResponse == null || jsonResponse['units'] == null) {
-      print('Error retrieving units.');
-      return null;
-    }
-    return jsonResponse['units'];
-  }
 
   Future<Null> postStockIns(String dbCode, String body, String _url) async {
     // Prepare for the Post request (http)
