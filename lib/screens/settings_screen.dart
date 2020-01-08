@@ -16,19 +16,19 @@ class SettingScreen extends StatefulWidget {
 class SettingScreenState extends State<SettingScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final _deviceController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _ipAddressController = TextEditingController();
-  final _portNumController = TextEditingController();
-  final _companyController = TextEditingController();
-  final _locationController = TextEditingController();
-  
-  FocusNode _deviceNode = FocusNode();
-  FocusNode _usernameNode = FocusNode();
-  FocusNode _ipNode = FocusNode();
-  FocusNode _portNode = FocusNode();
-  FocusNode _compNode = FocusNode();
-  FocusNode _locNode = FocusNode();
+  final _deviceController = new TextEditingController();
+  final _usernameController = new TextEditingController();
+  final _ipAddressController = new TextEditingController();
+  final _portNumController = new TextEditingController();
+  final _companyController = new TextEditingController();
+  final _locationController = new TextEditingController();
+
+  FocusNode _deviceNode = new FocusNode();
+  FocusNode _usernameNode = new FocusNode();
+  FocusNode _ipNode = new FocusNode();
+  FocusNode _portNode = new FocusNode();
+  FocusNode _compNode = new FocusNode();
+  FocusNode _locNode = new FocusNode();
 
   List<TextEditingController> _descriptionControllers = new List();
   List<FocusNode> _descriptionFocusNodes = new List();
@@ -77,9 +77,9 @@ class SettingScreenState extends State<SettingScreen> {
         setState(() {
           if(_descriptions[i] != '') {
             parsed = _descriptions[i].split('. ');
-            _descriptionControllers[i].text = parsed[1]; 
+            _descriptionControllers[i].text = parsed[1];
           } else {
-            _descriptionControllers[i].text = 'Unknown'; 
+            _descriptionControllers[i].text = 'Unknown';
           }
         });
       }
@@ -119,7 +119,7 @@ class SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  @override 
+  @override
   Widget build(BuildContext context) {
 
     Widget _mainInput(String header, TextEditingController _mainController, FocusNode _mainNode) {
@@ -132,7 +132,7 @@ class SettingScreenState extends State<SettingScreen> {
               '$header:',
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 20, 
+                fontSize: 20,
                 color: Color(0xFF004B83),
                 fontWeight: FontWeight.bold,
               ),
@@ -146,7 +146,7 @@ class SettingScreenState extends State<SettingScreen> {
                 height: 40,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 16, 
+                    fontSize: 16,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -155,7 +155,7 @@ class SettingScreenState extends State<SettingScreen> {
                     fillColor: Colors.white,
                     hintText: header,
                     hintStyle: TextStyle(
-                      color: Color(0xFF004B83), 
+                      color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
                     ),
                     border: OutlineInputBorder(
@@ -165,8 +165,8 @@ class SettingScreenState extends State<SettingScreen> {
                       color: Colors.yellowAccent,
                     ),
                     suffixIcon: IconButton(
-                      icon: Icon(EvaIcons.close, 
-                        color: Colors.blueAccent, 
+                      icon: Icon(EvaIcons.close,
+                        color: Colors.blueAccent,
                         size: 24,
                       ),
                       onPressed: () {
@@ -179,7 +179,7 @@ class SettingScreenState extends State<SettingScreen> {
                   controller: _mainController,
                   focusNode: _mainNode,
                   onTap: () {
-                    _focusNode(context, _mainNode);
+                    // _clearTextController(context, _mainController, _mainNode);
                   },
                 ),
               ),
@@ -220,7 +220,7 @@ class SettingScreenState extends State<SettingScreen> {
                 } else {
                   _descripts.add('$i. Unknown');
                 }
-                print('HOho: ${dController.text}'); 
+                print('HOho: ${dController.text}');
               }
               FileManager.setDescriptionList(_descripts).then((_){
                 _scaffoldKey.currentState.showSnackBar(SnackBar(
@@ -256,8 +256,8 @@ class SettingScreenState extends State<SettingScreen> {
           elevation: 2,
         )
       );
-    }  
-    
+    }
+
     Widget _descriptionInput(BuildContext context, TextEditingController _controller, FocusNode __focusNode, index) {
       return Padding(
         padding: const EdgeInsets.all(2.0),
@@ -287,6 +287,7 @@ class SettingScreenState extends State<SettingScreen> {
             focusNode: __focusNode,
             onTap: () {
               _focusNode(context, __focusNode);
+              // _clearTextController(context, _controller, __focusNode);
             },
           ),
         ),
@@ -305,7 +306,7 @@ class SettingScreenState extends State<SettingScreen> {
         height: 450,
         width: 400,
         child: child,
-      );  
+      );
     }
 
     Widget _descriptionInputList(BuildContext context) {
@@ -384,6 +385,6 @@ class SettingScreenState extends State<SettingScreen> {
         ),
       ),
     );
-    
+
   }
 }

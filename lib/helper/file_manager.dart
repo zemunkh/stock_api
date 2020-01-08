@@ -41,33 +41,6 @@ class FileManager {
     return profile;
   }
 
-// For the draft naming purpose
-  static Future<Null> saveDraftList(String trxName) async {
-    final prefs = await SharedPreferences.getInstance();
-    String key = 'draft_trx_list';
-    List<String> drafts = prefs.getStringList(key);
-    if(drafts == null || drafts.isEmpty) {
-      drafts = [trxName];
-      prefs.setStringList(key, drafts);
-    } else {
-      if(drafts[drafts.length - 1] != trxName) {
-        drafts.add(trxName);
-        prefs.setStringList(key, drafts);
-      }
-    }
-    print('Draft Trx List: $drafts');
-    return null;
-  }
-
-  static Future<List> getDraftList() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> drafts = prefs.getStringList('draft_trx_list');
-    if(drafts == null) {
-      drafts = [];
-    }
-    print('Draft List: $drafts');
-    return drafts;
-  } 
 
   static Future<List> readDescriptions() async {
     final prefs = await SharedPreferences.getInstance();
@@ -154,6 +127,23 @@ class FileManager {
     final prefs = await SharedPreferences.getInstance();
     int index = prefs.getInt('draft_selected');
     return index;
+  }
+
+  static Future<Null> saveDraftBank(String draftName) async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = 'draft_trx_list';
+    List<String> drafts = prefs.getStringList(key);
+    if(drafts == null || drafts.isEmpty) {
+      drafts = [draftName];
+      prefs.setStringList(key, drafts);
+    } else {
+      if(drafts[drafts.length - 1] != draftName) {
+        drafts.add(draftName);
+        prefs.setStringList(key, drafts);
+      }
+    }
+    print('Draft Name List: $drafts');
+    return null;
   }
 
   static Future<List> getDraftBank() async {

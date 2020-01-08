@@ -139,7 +139,12 @@ class ActivationScreen extends StatelessWidget {
       // ),
       backgroundColor: Style.Colors.background,
       body: Center(
-        child: mainView,
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).requestFocus(new FocusNode());
+          },
+          child: mainView,
+        ),
       ),
     );
   }

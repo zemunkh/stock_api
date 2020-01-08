@@ -24,9 +24,16 @@ class StockInDraftItem extends StatelessWidget {
           children: <Widget>[
             IconButton(
               icon: Icon(EvaIcons.trash2Outline),
-              onPressed: () {
+              onPressed: () async {
+                FileManager.removeDraft('draft_other_$draftName');
+                FileManager.removeDraft('draft_stockCode_$draftName');
+                FileManager.removeDraft('draft_stockName_$draftName');
+                FileManager.removeDraft('draft_lvl1uom_$draftName');
+                FileManager.removeDraft('draft_lvl2uom_$draftName');
+                FileManager.removeDraft('draft_lvl1uomCode_$draftName');
+                FileManager.removeDraft('draft_lvl2uomCode_$draftName');
                 FileManager.removeFromBank(index);
-                print('Draft name: $draftName');
+                print('Draft name: $draftName, index: $index');
                 Navigator.of(context).pushReplacementNamed(StockInDraftScreen.routeName);
               },
               color: Theme.of(context).errorColor,
