@@ -113,7 +113,7 @@ class FileManager {
     int number = prefs.getInt('trx_numbering');
     print("Number: $number \r\n");
     if(number == null || number == 0) {
-      return 0;
+      return 1;
     }
     return number;
   }

@@ -20,16 +20,21 @@ class _StockInTransactionState extends State<StockInTransaction> {
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
 
+  final _refController = new TextEditingController();
   List<TextEditingController> _stockInputControllers = new List();
   List<TextEditingController> _lvl1InputControllers = new List();
   List<TextEditingController> _lvl2InputControllers = new List();
 
+  FocusNode _refNode = new FocusNode();
   List<FocusNode> _stockInputNodes = new List();
   List<FocusNode> _lvl1InputNodes = new List();
   List<FocusNode> _lvl2InputNodes = new List();
 
   String trxNumber = '';
   String stockId = '';
+
+  String projectCode = '';
+  String location = '';
 
   List<String> _lvl1uomList = [];
   List<String> _lvl2uomList = [];
@@ -181,8 +186,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
         amount: 1,
         note: null,
         costCentre: null,
-        project: "Serdang",
-        stockLocation: "HQ",
+        project: projectCode,
+        stockLocation: location,
       );
 
       Details details2 = Details(
@@ -198,8 +203,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
         amount: 1,
         note: null,
         costCentre: null,
-        project: "Serdang",
-        stockLocation: "HQ",
+        project: projectCode,
+        stockLocation: location,
       );
 
       if (_lvl1InputControllers[i].text != '' &&
@@ -218,13 +223,13 @@ class _StockInTransactionState extends State<StockInTransaction> {
         stockInCode: trxNumber,
         stockInDate: DateFormat("yyyy-MM-dd").format(date),
         description: dropdownValue.split('. ')[1],
-        referenceNo: null,
-        title: "Test",
+        referenceNo: '${_refController.text}',
+        title: _stockInputControllers[i].text,
         isCancelled: false,
         notes: null,
         costCentre: null,
-        project: "Serdang",
-        stockLocation: "HQ",
+        project: projectCode,
+        stockLocation: location,
         details: detail,
       );
 
@@ -266,6 +271,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     _otherList.add(createdDate.toString());
     _otherList.add(trxNumber);
     _otherList.add(dropdownValue);
+    _otherList.add(_refController.text);
 
     // List<String> draftBank = await FileManager.getDraftList();
     // String index = '${draftBank.length}';
@@ -289,7 +295,12 @@ class _StockInTransactionState extends State<StockInTransaction> {
     return showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Do you want to delete #${index + 1} row?"),
+          title: Text("Do you want to delete #${index + 1} row?",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           actions: <Widget>[
             FlatButton(
               child: Text('Yes'),
@@ -329,7 +340,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
   Future<Null> setInitials() async {
     DateTime currentDate = DateTime.now();
     String cdate = DateFormat("yyMMdd").format(currentDate);
-
+    projectCode = await FileManager.readProfile('project_code');
+    location = await FileManager.readProfile('location');
     // Comparing the new trx number and old trx number for renewal
     String savedTrxDate = await FileManager.getTrxDate();
     int numbering = await FileManager.getTrxNumbering();
@@ -337,8 +349,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
       FileManager.setTrxNumbering(numbering + 1);
       ++numbering;
     } else {
-      FileManager.setTrxNumbering(0);
-      numbering = 0;
+      FileManager.setTrxNumbering(1);
+      numbering = 1;
       FileManager.setTrxDate(cdate);
     }
 
@@ -377,6 +389,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
   @override
   void dispose() {
     super.dispose();
+    for(int i = 0; i < _stockInputControllers.length; i++) {
+      _stockInputControllers[i].dispose();
+      _lvl1InputControllers[i].dispose();
+      _lvl2InputControllers[i].dispose();
+    }
   }
 
   @override
@@ -392,7 +409,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     Widget deleteRowButton(int index) {
       return Padding(
-        padding: EdgeInsets.all(5),
+        padding: EdgeInsets.only(right: 12),
         child: MaterialButton(
           onPressed: () {
             // delete current row
@@ -421,17 +438,17 @@ class _StockInTransactionState extends State<StockInTransaction> {
         FocusNode _lvl1Node,
         FocusNode _lvl2Node) {
       return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Expanded(
-            flex: 2,
+            flex: 6,
             child: Padding(
-              padding: EdgeInsets.all(2.0),
+              padding: EdgeInsets.only(left: 12, right: 2),
               child: Container(
-                height: 32,
+                height: 40,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 16,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -463,7 +480,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             flex: 2,
             child: Text(
               _lvl1uomList[index],
-              textAlign: TextAlign.left,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
                 color: Color(0xFF004B83),
@@ -471,15 +488,16 @@ class _StockInTransactionState extends State<StockInTransaction> {
               ),
             ),
           ),
+          SizedBox(width: 10,),
           Expanded(
-            flex: 2,
+            flex: 6,
             child: Padding(
-              padding: const EdgeInsets.all(2.0),
+              padding: const EdgeInsets.only(left: 2, right: 2),
               child: Container(
-                height: 32,
+                height: 40,
                 child: TextFormField(
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 16,
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
@@ -512,7 +530,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             flex: 2,
             child: Text(
               _lvl2uomList[index],
-              textAlign: TextAlign.left,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
                 color: Color(0xFF004B83),
@@ -530,439 +548,421 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     Widget _stockInput(
         int index, TextEditingController _controller, FocusNode _stockNode) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          Expanded(
-              flex: 3,
-              child: Text(
-                'StockIn: ${index + 1}',
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF004B83),
-                  fontWeight: FontWeight.bold,
+      return Padding(
+        padding: const EdgeInsets.only(left: 12, right: 12, top: 3, bottom: 3),
+        child: Container(
+          height: 45,
+          child: TextFormField(
+            style: TextStyle(
+              fontSize: 18,
+              color: Color(0xFF004B83),
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              hintText: '${index + 1}. Stock code',
+              hintStyle: TextStyle(
+                color: Color(0xFF004B83),
+                fontWeight: FontWeight.w400,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              errorStyle: TextStyle(
+                color: Colors.yellowAccent,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  EvaIcons.close,
+                  color: Colors.blueAccent,
+                  size: 20,
                 ),
-              )),
-          Expanded(
-            flex: 7,
-            child: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: Container(
-                height: 40,
-                child: TextFormField(
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF004B83),
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'Stock code',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF004B83),
-                      fontWeight: FontWeight.w200,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    errorStyle: TextStyle(
-                      color: Colors.yellowAccent,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        EvaIcons.close,
-                        color: Colors.blueAccent,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        _clearTextController(context, _controller, _stockNode);
-                      },
-                    ),
-                  ),
-                  autofocus: false,
-                  controller: _controller,
-                  focusNode: _stockNode,
-                  onTap: () {
-                    _focusNode(context, _stockNode);
-                  },
-                  onChanged: (value) {
-                    _stockInEventListener(index, _controller);
-                  },
-                ),
+                onPressed: () {
+                  _clearTextController(context, _controller, _stockNode);
+                },
               ),
             ),
+            autofocus: false,
+            controller: _controller,
+            focusNode: _stockNode,
+            onTap: () {
+              _focusNode(context, _stockNode);
+              // _clearTextController(context, _controller, _stockNode);
+            },
+            onChanged: (value) {
+              _stockInEventListener(index, _controller);
+            },
           ),
-        ],
+        ),
       );
     }
 
-    final addStockInputButton = Center(
-      child: Padding(
-        padding: EdgeInsets.all(10),
-        child: MaterialButton(
-          onPressed: () {
-            setState(() {
-              _lvl1uomList.add('');
-              _lvl2uomList.add('');
-              _stockNames.add('');
-              _isUOMEnabledList.add(false);
-              _stockInputControllers.add(new TextEditingController());
-              _lvl1InputControllers.add(new TextEditingController());
-              _lvl2InputControllers.add(new TextEditingController());
-
-              _stockInputNodes.add(new FocusNode());
-              _lvl1InputNodes.add(new FocusNode());
-              _lvl2InputNodes.add(new FocusNode());
-            });
-          },
-          child: Icon(
-            EvaIcons.plusCircleOutline,
-            color: Colors.blueGrey,
-            size: 40,
+    final referenceInput = Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: Container(
+        height: 40,
+        child: TextFormField(
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF004B83),
+            fontWeight: FontWeight.bold,
           ),
-          // shape: StadiumBorder(),
-          // color: Colors.lightBlue[600],
-          splashColor: Colors.teal,
-          height: 50,
-          // minWidth: MediaQuery.of(context).size.width / 2,
-          elevation: 2,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            hintText: 'Reference',
+            hintStyle: TextStyle(
+              color: Color(0xFF004B83),
+              fontWeight: FontWeight.w200,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            errorStyle: TextStyle(
+              color: Colors.yellowAccent,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                EvaIcons.close,
+                color: Colors.blueAccent,
+                size: 20,
+              ),
+              onPressed: () {
+                _clearTextController(context, _refController, _refNode);
+              },
+            ),
+          ),
+          autofocus: false,
+          controller: _refController,
+          focusNode: _refNode,
+          onTap: () {
+            _focusNode(context, _refNode);
+            // _clearTextController(context, _controller, _stockNode);
+          },
         ),
       ),
     );
 
-    final postButton = Center(
-      child: Padding(
-        padding: EdgeInsets.all(10),
-        child: MaterialButton(
-          onPressed: _isButtonDisabled
-              ? null
-              : () {
-                  // gather all the information and post data to db by api lib.
-                  /// Check process and post Transaction
-                  bool _completed = true;
-                  int index = 0;
-                  _stockInputControllers.forEach((controller) async {
-                    if (_isUOMEnabledList[index] == false) {
-                      if (controller.text != '' &&
-                          _lvl1InputControllers[index].text != '') {
-                        _completed = _completed && true;
-                      } else {
-                        _completed = false;
-                      }
-                    } else {
-                      if (controller.text != '' &&
-                          _lvl1InputControllers[index].text != '' &&
-                          _lvl2InputControllers[index].text != '') {
-                        _completed = _completed && true;
-                      } else {
-                        _completed = false;
-                      }
-                    }
-                    index++;
-                  });
 
-                  if (_completed) {
-                    return showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                              title: Text(
-                                  "Do you want to upload the transactions?"),
-                              actions: <Widget>[
-                                FlatButton(
-                                  child: Text('Yes'),
-                                  onPressed: () {
-                                    if (!postClicked) {
-                                      print('Yes clicked');
-                                      _postTransaction(createdDate).then((_) {
-                                        Navigator.of(context)
-                                            .pushReplacementNamed(
-                                                HomeScreen.routeName);
-                                      });
-                                      setState(() {
-                                        postClicked = true;
-                                      });
-                                    }
-                                  },
-                                ),
-                                FlatButton(
-                                  child: Text('No'),
-                                  onPressed: () {
-                                    print('No clicked');
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            ));
+
+    final addStockInputButton = Center(
+      child: MaterialButton(
+        onPressed: () {
+          setState(() {
+            _lvl1uomList.add('');
+            _lvl2uomList.add('');
+            _stockNames.add('');
+            _isUOMEnabledList.add(false);
+            _stockInputControllers.add(new TextEditingController());
+            _lvl1InputControllers.add(new TextEditingController());
+            _lvl2InputControllers.add(new TextEditingController());
+
+            _stockInputNodes.add(new FocusNode());
+            _lvl1InputNodes.add(new FocusNode());
+            _lvl2InputNodes.add(new FocusNode());
+          });
+        },
+        child: Icon(
+          EvaIcons.plusCircleOutline,
+          color: Colors.blueGrey,
+          size: 40,
+        ),
+        // shape: StadiumBorder(),
+        // color: Colors.lightBlue[600],
+        splashColor: Colors.teal,
+        height: 40,
+        // minWidth: MediaQuery.of(context).size.width / 2,
+        elevation: 2,
+      ),
+    );
+
+    final postButton = MaterialButton(
+      onPressed: _isButtonDisabled
+          ? null
+          : () {
+              // gather all the information and post data to db by api lib.
+              /// Check process and post Transaction
+              bool _completed = true;
+              int index = 0;
+              _stockInputControllers.forEach((controller) async {
+                if (_isUOMEnabledList[index] == false) {
+                  if (controller.text != '' &&
+                      _lvl1InputControllers[index].text != '') {
+                    _completed = _completed && true;
                   } else {
-                    return showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                              title: Text("Please fill all input fieds"),
-                              actions: <Widget>[
-                                FlatButton(
-                                  child: Text('Okay'),
-                                  onPressed: () {
-                                    print('Ok clicked');
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            ));
+                    _completed = false;
                   }
-                },
-          child: Text(
-            'Complete Trx',
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'QuickSand',
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          shape: StadiumBorder(),
-          color: Colors.teal[300],
-          splashColor: Colors.green[50],
-          height: 40,
-          minWidth: 140,
-          elevation: 2,
+                } else {
+                  if (controller.text != '' &&
+                      _lvl1InputControllers[index].text != '' &&
+                      _lvl2InputControllers[index].text != '') {
+                    _completed = _completed && true;
+                  } else {
+                    _completed = false;
+                  }
+                }
+                index++;
+              });
+
+              if (_completed) {
+                return showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                          title: Text(
+                              "Do you want to upload the transactions?"),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text('Yes'),
+                              onPressed: () {
+                                if (!postClicked) {
+                                  print('Yes clicked');
+                                  _postTransaction(createdDate).then((_) {
+                                    Navigator.of(context)
+                                        .pushReplacementNamed(
+                                            HomeScreen.routeName);
+                                  });
+                                  setState(() {
+                                    postClicked = true;
+                                  });
+                                }
+                              },
+                            ),
+                            FlatButton(
+                              child: Text('No'),
+                              onPressed: () {
+                                print('No clicked');
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        ));
+              } else {
+                return showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                          title: Text("Please fill all input fieds"),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text('Okay'),
+                              onPressed: () {
+                                print('Ok clicked');
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        ));
+              }
+            },
+      child: Text(
+        'Complete',
+        style: TextStyle(
+          color: Colors.white,
+          fontFamily: 'QuickSand',
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
         ),
       ),
+      shape: StadiumBorder(),
+      color: Colors.teal[300],
+      splashColor: Colors.green[50],
+      height: 30,
+      minWidth: 130,
+      elevation: 2,
     );
 
     Widget _saveDraftButton(BuildContext context) {
-      return Padding(
-          padding: EdgeInsets.all(5),
-          child: MaterialButton(
-            onPressed: _isButtonDisabled
-                ? null
-                : () {
-                    print('You pressed Draft Button!');
-                    _saveTheDraft(createdDate).then((_) {
-                      Alert(
-                        context: context,
-                        type: AlertType.success,
-                        title: "StockIn draft is saved successfully",
-                        desc: "Current page will be deleted now.",
-                        buttons: [
-                          DialogButton(
-                            child: Text(
-                              "OK",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
-                            ),
-                            onPressed: () => Navigator.of(context)
-                                .pushReplacementNamed(HomeScreen.routeName),
-                            width: 120,
-                          )
-                        ],
-                      ).show();
-                    });
-                  },
-            child: Text(
-              'Save as Draft',
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'QuickSand',
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            shape: StadiumBorder(),
-            color: Colors.orange[800],
-            splashColor: Colors.yellow[200],
-            height: 40,
-            minWidth: 100,
-            elevation: 2,
-          ));
+      return MaterialButton(
+        onPressed: _isButtonDisabled
+          ? null: () {
+              return showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(
+                      "Do you want to save the draft?"),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Yes'),
+                      onPressed: () {
+                        print('You pressed Draft Button!');
+                        _saveTheDraft(createdDate).then((_) {
+                          Alert(
+                            context: context,
+                            type: AlertType.success,
+                            title: "StockIn draft is saved successfully",
+                            desc: "Current page will be deleted now.",
+                            buttons: [
+                              DialogButton(
+                                child: Text(
+                                  "OK",
+                                  style:
+                                      TextStyle(color: Colors.white, fontSize: 20),
+                                ),
+                                onPressed: () => Navigator.of(context)
+                                    .pushReplacementNamed(HomeScreen.routeName),
+                                width: 120,
+                              )
+                            ],
+                          ).show();
+                        });
+                      },
+                    ),
+                    FlatButton(
+                      child: Text('No'),
+                      onPressed: () {
+                        print('No clicked');
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ));
+              },
+        child: Text(
+          'Save draft',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'QuickSand',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        shape: StadiumBorder(),
+        color: Colors.orange[800],
+        splashColor: Colors.yellow[200],
+        height: 30,
+        minWidth: 130,
+        elevation: 2,
+      );
     }
 
     Widget _descriptionMenu(BuildContext context, String header) {
-      return Row(
-        children: <Widget>[
-          Expanded(
-            flex: 4,
-            child: Text(
-              '$header',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF004B83),
-                  fontWeight: FontWeight.bold),
+      return Padding(
+        padding: const EdgeInsets.only(right: 6.0, left: 6.0),
+        child: Container(
+          child: DropdownButton<String>(
+            value: dropdownValue,
+            icon: Icon(EvaIcons.arrowDownOutline),
+            iconSize: 24,
+            elevation: 16,
+            style: TextStyle(color: Colors.deepPurple),
+            underline: Container(
+              height: 2,
+              color: Colors.deepPurpleAccent,
             ),
+            onChanged: (String newValue) {
+              setState(() {
+                dropdownValue = newValue;
+              });
+              // Add some functions to handle change.
+            },
+            items: _descriptions
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
           ),
-          Expanded(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.all(3.0),
-              child: Container(
-                child: DropdownButton<String>(
-                  value: dropdownValue,
-                  icon: Icon(EvaIcons.arrowDownOutline),
-                  iconSize: 24,
-                  elevation: 16,
-                  style: TextStyle(color: Colors.deepPurple),
-                  underline: Container(
-                    height: 2,
-                    color: Colors.deepPurpleAccent,
-                  ),
-                  onChanged: (String newValue) {
-                    setState(() {
-                      dropdownValue = newValue;
-                    });
-                    // Add some functions to handle change.
-                  },
-                  items: _descriptions
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       );
     }
 
     Widget statusBar(String time) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 2, right: 2),
-        child: Row(
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          Text(
+            '$time',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'QuickSand',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black,
+            ),
+          ),
+          SizedBox(height:10,),
+          Text(
+            '$trxNumber',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'QuickSand',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final transaction =  <Widget>[
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             Expanded(
-              flex: 3,
-              child: Text(
-                time,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'QuickSand',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
+              flex: 5,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  statusBar(DateFormat("dd/MM/yyyy HH:mm").format(createdDate)),
+                  SizedBox(height: 10,),
+                  referenceInput,
+                ],
               ),
             ),
             Expanded(
-              flex: 7,
-              child: Text(
-                'System Auto: $trxNumber',
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontFamily: 'QuickSand',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Widget buildContainer(Widget child) {
-      return Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(5)),
-        margin: EdgeInsets.all(5),
-        padding: EdgeInsets.all(5),
-        height: 350,
-        width: 400,
-        child: child,
-      );
-    }
-
-    final transaction = GestureDetector(
-      onTap: () {
-        FocusScope.of(context).requestFocus(new FocusNode());
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16),
-        child: Container(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              statusBar(DateFormat("yyyy/MM/dd HH:mm:ss").format(createdDate)),
-              // descriptionMenu,
-              // stockParameters,
-              _descriptionMenu(context, 'Description:'),
-              new Divider(
-                height: 20.0,
-                color: Colors.black87,
-              ),
-
-              buildContainer(
-                ListView.builder(
-                  itemCount: _stockInputControllers?.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return Container(
-                      padding: const EdgeInsets.all(4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          _stockInput(index, _stockInputControllers[index],
-                              _stockInputNodes[index]),
-                          Text('Stock: ${_stockNames[index]}'),
-                          _stockMeasurement(
-                              index,
-                              _lvl1InputControllers[index],
-                              _lvl2InputControllers[index],
-                              _lvl1InputNodes[index],
-                              _lvl2InputNodes[index]),
-                          new Divider(
-                            height: 15.0,
-                            color: Colors.black87,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              addStockInputButton,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              flex: 5,
+              child: Column(
+                // mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Expanded(
-                    child: postButton,
-                  ),
-                  Expanded(
-                    child: _saveDraftButton(context),
-                  )
+                  addStockInputButton,
+                  _saveDraftButton(context),
+                  postButton,
                 ],
               ),
-            ],
-          ),
+            )
+          ],
         ),
-      ),
-    );
+        _descriptionMenu(context, 'Descriptions:'),
+        new Divider(
+          height: 5.0,
+          color: Colors.black87,
+        ),
+        Expanded(
+          child: ListView.builder(
+              itemCount: _stockInputControllers?.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Container(
+                  padding: const EdgeInsets.all(4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      _stockInput(index, _stockInputControllers[index],
+                          _stockInputNodes[index]),
+                      Text('${_stockNames[index]}'),
+                      _stockMeasurement(
+                          index,
+                          _lvl1InputControllers[index],
+                          _lvl2InputControllers[index],
+                          _lvl1InputNodes[index],
+                          _lvl2InputNodes[index]),
+                      new Divider(
+                        height: 15.0,
+                        color: Colors.black87,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ),
+      ];
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).requestFocus(new FocusNode());
-      },
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          if (constraints.maxHeight > constraints.maxWidth) {
-            return SingleChildScrollView(
-              child: transaction,
-            );
-          } else {
-            return Center(
-              child: SingleChildScrollView(
-                // width: 450,
-                child: transaction,
-              ),
-            );
-          }
-        },
-      ),
+    return Column(
+      // shrinkWrap: true,
+      // padding: const EdgeInsets.only(left: 2, right: 2),
+      children: transaction
     );
   }
 }

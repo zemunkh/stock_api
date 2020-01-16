@@ -3,7 +3,6 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:retail_api/screens/import_stocks_screen.dart';
 import '../screens/stockIn_draft_screen.dart';
 import '../screens/home_screen.dart';
-import '../screens/saved_record_screen.dart';
 import '../screens/settings_screen.dart';
 
 

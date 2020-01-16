@@ -1,5 +1,6 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/main_drawer.dart';
 import '../helper/file_manager.dart';
 import '../styles/theme.dart' as Style;
@@ -22,6 +23,7 @@ class SettingScreenState extends State<SettingScreen> {
   final _portNumController = new TextEditingController();
   final _companyController = new TextEditingController();
   final _locationController = new TextEditingController();
+  final _projectController = new TextEditingController();
 
   FocusNode _deviceNode = new FocusNode();
   FocusNode _usernameNode = new FocusNode();
@@ -29,13 +31,12 @@ class SettingScreenState extends State<SettingScreen> {
   FocusNode _portNode = new FocusNode();
   FocusNode _compNode = new FocusNode();
   FocusNode _locNode = new FocusNode();
+  FocusNode _projNode = new FocusNode();
 
   List<TextEditingController> _descriptionControllers = new List();
   List<FocusNode> _descriptionFocusNodes = new List();
 
   List<String> _descriptions = [];
-  bool lockEn = true;
-
 
 
   Future<Null> _focusNode(BuildContext context, FocusNode node) async {
@@ -52,12 +53,13 @@ class SettingScreenState extends State<SettingScreen> {
   }
 
   Future<Null> setInitialValue() async {
-    _usernameController.text = await FileManager.readProfile('user_name');
-    _deviceController.text = await FileManager.readProfile('device_name');
+    _usernameController.text = await FileManager.readProfile('user_name_api');
+    _deviceController.text = await FileManager.readProfile('device_name_api');
     _ipAddressController.text = await FileManager.readProfile('ip_address');
     _portNumController.text = await FileManager.readProfile('port_number');
     _companyController.text = await FileManager.readProfile('company_name');
     _locationController.text = await FileManager.readProfile('location');
+    _projectController.text = await FileManager.readProfile('project_code');
     _descriptions = await FileManager.readDescriptions();
     List<String> parsed = [];
     for(int i = 0; i < 8; i++) {
@@ -92,6 +94,14 @@ class SettingScreenState extends State<SettingScreen> {
     super.dispose();
     _deviceController.dispose();
     _usernameController.dispose();
+    _ipAddressController.dispose();
+    _portNumController.dispose();
+    _companyController.dispose();
+    _locationController.dispose();
+    _projectController.dispose();
+    for(int i = 0; i < _descriptionControllers.length; i++) {
+      _descriptionControllers[i].dispose();
+    }
   }
 
   @override
@@ -108,7 +118,7 @@ class SettingScreenState extends State<SettingScreen> {
         actions: <Widget>[
           FlatButton(
             child: Text('Yes'),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => SystemNavigator.pop(),
           ),
           FlatButton(
             child: Text('No'),
@@ -122,7 +132,7 @@ class SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
 
-    Widget _mainInput(String header, TextEditingController _mainController, FocusNode _mainNode) {
+    Widget _mainInput(String header, String hintext, TextEditingController _mainController, FocusNode _mainNode) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -153,7 +163,7 @@ class SettingScreenState extends State<SettingScreen> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: header,
+                    hintText: hintext,
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
@@ -174,11 +184,10 @@ class SettingScreenState extends State<SettingScreen> {
                       },
                     ),
                   ),
-                  autofocus: false,
-                  autocorrect: false,
                   controller: _mainController,
                   focusNode: _mainNode,
                   onTap: () {
+                    _focusNode(context, _mainNode);
                     // _clearTextController(context, _mainController, _mainNode);
                   },
                 ),
@@ -203,13 +212,15 @@ class SettingScreenState extends State<SettingScreen> {
             String port = _portNumController.text;
             String company = _companyController.text;
             String location = _locationController.text;
+            String project = _projectController.text;
             if(dname != '' && uname != '') {
-              FileManager.saveProfile('device_name', dname).then((_){
-                FileManager.saveProfile('user_name',uname);
+              FileManager.saveProfile('device_name_api', dname).then((_){
+                FileManager.saveProfile('user_name_api',uname);
                 FileManager.saveProfile('ip_address', ip);
                 FileManager.saveProfile('port_number', port);
                 FileManager.saveProfile('company_name', company);
                 FileManager.saveProfile('location', location);
+                FileManager.saveProfile('project_code', project);
               });
               print('Saving now!');
               int i = 0;
@@ -263,7 +274,7 @@ class SettingScreenState extends State<SettingScreen> {
         padding: const EdgeInsets.all(2.0),
         child: Container(
           height: 25,
-          child: TextFormField(
+          child: TextField(
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF004B83),
@@ -282,7 +293,6 @@ class SettingScreenState extends State<SettingScreen> {
                 borderRadius: BorderRadius.circular(5.0),
               ),
             ),
-            autofocus: false,
             controller: _controller,
             focusNode: __focusNode,
             onTap: () {
@@ -327,15 +337,14 @@ class SettingScreenState extends State<SettingScreen> {
       );
     }
 
-    final transaction = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        _mainInput('Device Name',_deviceController, _deviceNode),
-        _mainInput('Username',_usernameController, _usernameNode),
-        _mainInput('IP address',_ipAddressController, _ipNode),
-        _mainInput('Port Num', _portNumController, _portNode),
-        _mainInput('Company', _companyController, _compNode),
-        _mainInput('Location', _locationController, _locNode),
+    final transaction = <Widget>[
+        _mainInput('Device Name', 'Device Name', _deviceController, _deviceNode),
+        _mainInput('Username', 'Username', _usernameController, _usernameNode),
+        _mainInput('IP address', 'default is qne.cloud', _ipAddressController, _ipNode),
+        _mainInput('Port Num', 'Port number', _portNumController, _portNode),
+        _mainInput('Company', 'dbCode', _companyController, _compNode),
+        _mainInput('Location', 'default is HQ', _locationController, _locNode),
+        _mainInput('Project',  'default is Serdang', _projectController, _projNode),
         SizedBox(height: 15,),
 
         buildContainer(_descriptionInputList(context)),
@@ -346,9 +355,7 @@ class SettingScreenState extends State<SettingScreen> {
              _saveButton(context),
           ],
         ),
-
-      ],
-    );
+      ];
 
     return WillPopScope(
       onWillPop: _backButtonPressed,
@@ -360,26 +367,15 @@ class SettingScreenState extends State<SettingScreen> {
         ),
         drawer: MainDrawer(),
         body: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(new FocusNode());
-          },
-          child: Padding(
+            onTap: (){
+              FocusScope.of(context).requestFocus(new FocusNode());
+            },
+            child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                if(constraints.maxHeight > constraints.maxWidth) {
-                  return SingleChildScrollView(
-                    child: transaction,
-                  );
-                } else {
-                  return Center(
-                    child: Container(
-                      width: 450,
-                      child: transaction,
-                    ),
-                  );
-                }
-              },
+            child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.all(8),
+              children: transaction,
             ),
           ),
         ),

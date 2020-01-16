@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:retail_api/screens/import_stocks_screen.dart';
-import 'package:retail_api/screens/settings_screen.dart';
-import 'package:retail_api/screens/stockIn_draft_edit_screen.dart';
-import 'package:retail_api/screens/stockIn_draft_screen.dart';
+import './screens/import_stocks_screen.dart';
+import './screens/settings_screen.dart';
+import './screens/stockIn_draft_edit_screen.dart';
+import './screens/stockIn_draft_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './screens/activation_screen.dart';
@@ -61,6 +61,7 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         print(settings.arguments);
+        return null;
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
@@ -74,7 +75,7 @@ class MyApp extends StatelessWidget {
 
 _read() async {
   final prefs = await SharedPreferences.getInstance();
-  final key = 'my_activation_status';
+  final key = 'my_activation_status_api';
   final status = prefs.getBool(key) ?? false;
   print('Activation Status: $status');
   // activated = status;

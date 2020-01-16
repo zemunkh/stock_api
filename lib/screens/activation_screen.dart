@@ -151,7 +151,7 @@ class ActivationScreen extends StatelessWidget {
 
   _activate() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'my_activation_status';
+    final key = 'my_activation_status_api';
     final status = true;
     prefs.setBool(key, status);
     print('Activation Status: $status');

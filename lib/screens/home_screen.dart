@@ -85,9 +85,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         drawer: MainDrawer(),
-        body: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: StockInTransaction(),
+        body: GestureDetector(
+            onTap: (){
+              FocusScope.of(context).requestFocus(new FocusNode());
+            },
+            child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: StockInTransaction(),
+          ),
         ),
       ),
     );

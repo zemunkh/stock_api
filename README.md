@@ -1,4 +1,4 @@
-# retail_api
+# retail_api. no it is name stock_api
 
 A new Flutter project.
 
