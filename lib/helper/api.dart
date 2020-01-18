@@ -32,8 +32,9 @@ class Api {
     print('Response body: ${response.body}');
   }
 
-  Future<Null> postMultipleStockIns(String dbCode, List<String> body, String _url) async {
-    // Prepare for the Post request (http)   
+  Future<List> postMultipleStockIns(String dbCode, List<String> body, String _url) async {
+    // Prepare for the Post request (http) 
+    List<int> resList = []; 
     for(int i = 0; i < body.length; i++) {
       try {
         var response = await http.post(
@@ -44,10 +45,15 @@ class Api {
           },
           body: body[i]);
         print('Response body: ${response.body}');
+        resList.add(response.statusCode);
+      } on SocketException {
+        return ['SocketError'];
       } finally {
         _httpClient.close();
-      }
+      } 
     }
+
+    return resList;
   }
 }
 

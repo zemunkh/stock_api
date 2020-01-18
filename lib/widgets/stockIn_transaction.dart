@@ -4,6 +4,8 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:connectivity/connectivity.dart';
+import '../helper/connection.dart';
 import '../model/stockIn.dart';
 import '../model/uoms.dart';
 import '../helper/api.dart';
@@ -17,6 +19,9 @@ class StockInTransaction extends StatefulWidget {
 }
 
 class _StockInTransactionState extends State<StockInTransaction> {
+  Map _source = {ConnectivityResult.none: false};
+  MyConnectivity _connectivity = MyConnectivity.instance;
+
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
 
@@ -48,7 +53,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
   String buffer = '';
   String trueVal = '';
 
-  bool postClicked = false;
+  bool conStatus = false;
+
   List<bool> _isUOMEnabledList = [false];
   // URL preparation function initialization
   String ip, port, dbCode;
@@ -57,7 +63,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
   Future<Null> initServerUrl() async {
     ip = await FileManager.readProfile('ip_address');
     port = await FileManager.readProfile('port_number');
-    dbCode = await FileManager.readProfile('company_name');
+    dbCode = await FileManager.readProfile('stock_company_name');
     if (ip != '' && port != '' && dbCode != '') {
       _url = 'http://$ip:$port/api/';
     } else {
@@ -112,13 +118,23 @@ class _StockInTransactionState extends State<StockInTransaction> {
       }
     });
 
+    if(!isEmpty) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+          content: new Text(
+            "StockCode is not available! Please try again.",
+            textAlign: TextAlign.center,
+          ),
+          duration: const Duration(milliseconds: 2000),
+        ),
+      );
+    }
+
     setState(() {
       _isButtonDisabled = !isEmpty;
     });
   }
 
-  Future<Null> _stockInEventListener(
-      int index, TextEditingController _controller) async {
+  Future<Null> _stockInEventListener(int index, TextEditingController _controller) async {
     int length = _stockInputControllers.length;
 
     print('Length of the controllers: $length, index: $index');
@@ -129,16 +145,32 @@ class _StockInTransactionState extends State<StockInTransaction> {
       buffer = buffer.substring(0, buffer.length - 1);
       trueVal = buffer;
 
-      await Future.delayed(const Duration(milliseconds: 1000), () {
-        _stockInputControllers[index].text = trueVal;
-      }).then((value) {
-        _searchStockCode(index, trueVal);
-        Future.delayed(const Duration(milliseconds: 500), () {
-          // _stockInputController.clear();
-          _stockInputNodes[index].unfocus();
-          FocusScope.of(context).requestFocus(new FocusNode());
+      if(conStatus) {
+        await Future.delayed(const Duration(milliseconds: 1000), () {
+          _stockInputControllers[index].text = trueVal;
+        }).then((value) {
+          _searchStockCode(index, trueVal);
+          Future.delayed(const Duration(milliseconds: 500), () {
+            // _stockInputController.clear();
+            _stockInputNodes[index].unfocus();
+            FocusScope.of(context).requestFocus(new FocusNode());
+          });
         });
-      });
+      } else {
+        Future.delayed(const Duration(milliseconds: 2000), () {
+          _stockInputControllers[index].text = trueVal;
+          FocusScope.of(context).requestFocus(new FocusNode());
+            Scaffold.of(context).showSnackBar(SnackBar(
+              content: new Text(
+                "StockCode is not available! Please try again.",
+                textAlign: TextAlign.center,
+              ),
+              duration: const Duration(milliseconds: 2000),
+            ),
+          );
+        });
+      }
+
     }
   }
 
@@ -156,7 +188,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     });
   }
 
-  Future<Null> _postTransaction(DateTime date) async {
+  Future<String> _postTransaction(DateTime date) async {
     final api = Api();
 
     int len = _stockInputControllers.length;
@@ -244,12 +276,27 @@ class _StockInTransactionState extends State<StockInTransaction> {
       //   print("Post request is done!");
       // });
     }
-
-    await api
-        .postMultipleStockIns(dbCode, _bodyList, '${_url}StockIns')
-        .then((_) {
+    String result = '';
+    var resLen = 0;
+    var ctn = 0;
+    await api.postMultipleStockIns(dbCode, _bodyList, '${_url}StockIns').then((resCodeList) {
       print("Post requests are done!");
+      print("response length: ${resCodeList.length}");
+      resLen = resCodeList.length;
+
+      if(resCodeList[0] == 'SocketError') {
+        result = 'SocketError';
+      } else {
+        for(var i = 0; i < resCodeList.length; i++) {
+          if(resCodeList[i] == 200) {
+            ctn++;
+          }
+        }
+        result = '$ctn/$resLen';
+      }
     });
+
+    return result;
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
@@ -303,7 +350,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
           ),
           actions: <Widget>[
             FlatButton(
-              child: Text('Yes'),
+              child: Text('Yes',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
               onPressed: () {
                 print('Yes clicked');
                 setState(() {
@@ -327,7 +378,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
               },
             ),
             FlatButton(
-              child: Text('No'),
+              child: Text('No',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
               onPressed: () {
                 print('No clicked');
                 Navigator.pop(context, true);
@@ -340,7 +395,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
   Future<Null> setInitials() async {
     DateTime currentDate = DateTime.now();
     String cdate = DateFormat("yyMMdd").format(currentDate);
-    projectCode = await FileManager.readProfile('project_code');
+    projectCode = await FileManager.readProfile('stock_company_name');
     location = await FileManager.readProfile('location');
     // Comparing the new trx number and old trx number for renewal
     String savedTrxDate = await FileManager.getTrxDate();
@@ -389,6 +444,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
   @override
   void dispose() {
     super.dispose();
+    _connectivity.disposeStream();
     for(int i = 0; i < _stockInputControllers.length; i++) {
       _stockInputControllers[i].dispose();
       _lvl1InputControllers[i].dispose();
@@ -401,33 +457,69 @@ class _StockInTransactionState extends State<StockInTransaction> {
     super.initState();
     setInitials();
     initServerUrl();
+
+    _connectivity.initialise();
+    _connectivity.myStream.listen((source) {
+      setState(() => _source = source);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
 
+    switch (_source.keys.toList()[0]) {
+      case ConnectivityResult.none:
+        conStatus = false;
+        break;
+      case ConnectivityResult.mobile:
+        conStatus = true;
+        break;
+      case ConnectivityResult.wifi:
+        conStatus = true;
+    }
+
+    Widget responseStatus(bool status, String value) {
+      Alert(
+        context: context,
+        type: status == true ? AlertType.success : AlertType.error,
+        title: "Response Status: $value",
+        desc: status == true ? "Current page will be deleted now." : "Please check internet connection or settings parameters",
+        buttons: [
+          DialogButton(
+            child: Text(
+              "OK",
+              style:
+                  TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () => status == true ? Navigator.of(context)
+              .pushReplacementNamed(
+                  HomeScreen.routeName) : Navigator.of(context).pop(),
+            width: 120,
+          )
+        ],
+      ).show();
+      return null;
+    }
+
     Widget deleteRowButton(int index) {
-      return Padding(
-        padding: EdgeInsets.only(right: 12),
-        child: MaterialButton(
-          onPressed: () {
-            // delete current row
-            print("Clicked row index: $index");
-            _deleteRow(index);
-          },
-          child: Icon(
-            Icons.delete,
-            color: Colors.red,
-            size: 30,
-          ),
-          // shape: StadiumBorder(),
-          // color: Colors.teal[300],
-          splashColor: Colors.grey,
-          // height: 50,
-          // minWidth: 250,
-          elevation: 2,
+      return MaterialButton(
+        onPressed: () {
+          // delete current row
+          print("Clicked row index: $index");
+          _deleteRow(index);
+        },
+        child: Icon(
+          Icons.delete,
+          color: Colors.red,
+          size: 32,
         ),
+        // shape: StadiumBorder(),
+        // color: Colors.teal[300],
+        splashColor: Colors.grey,
+        // height: 50,
+        // minWidth: 250,
+        elevation: 2,
       );
     }
 
@@ -452,10 +544,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: InputDecoration.collapsed(
+                  decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '  lvl1: ${_lvl1uomList[index]}',
+                    hintText: '1: ${_lvl1uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
@@ -463,6 +555,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
+                    contentPadding: EdgeInsets.all(4),
                   ),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   autofocus: false,
@@ -477,7 +570,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               _lvl1uomList[index],
               textAlign: TextAlign.center,
@@ -501,10 +594,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
                     color: Color(0xFF004B83),
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: InputDecoration.collapsed(
+                  decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '  lvl2: ${_lvl2uomList[index]}',
+                    hintText: '2: ${_lvl2uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
@@ -512,6 +605,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
                     ),
+                    contentPadding: EdgeInsets.all(4),
                   ),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   enabled: _isUOMEnabledList[index],
@@ -527,7 +621,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               _lvl2uomList[index],
               textAlign: TextAlign.center,
@@ -539,7 +633,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 4,
             child: deleteRowButton(index),
           )
         ],
@@ -633,6 +727,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               },
             ),
           ),
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
           autofocus: false,
           controller: _refController,
           focusNode: _refNode,
@@ -706,26 +801,32 @@ class _StockInTransactionState extends State<StockInTransaction> {
               });
 
               if (_completed) {
-                return showDialog(
+                return conStatus == true ? showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                           title: Text(
-                              "Do you want to upload the transactions?"),
+                            "Do you want to upload the transactions?"),
                           actions: <Widget>[
                             FlatButton(
                               child: Text('Yes'),
                               onPressed: () {
-                                if (!postClicked) {
-                                  print('Yes clicked');
-                                  _postTransaction(createdDate).then((_) {
-                                    Navigator.of(context)
-                                        .pushReplacementNamed(
-                                            HomeScreen.routeName);
-                                  });
-                                  setState(() {
-                                    postClicked = true;
-                                  });
-                                }
+                                Navigator.of(context).pop();
+                                print('Yes clicked');
+                                _postTransaction(createdDate).then((value) {
+                                  print('From show dialog: $value');
+                                  if(value.isNotEmpty && value != '' && value != 'SocketError') {
+                                    var res = value.split('/')[0];
+                                    var len = value.split('/')[1];
+                                    if(res == len) {
+                                      responseStatus(true, value);
+                                    } else {
+                                      responseStatus(false, value);
+                                    }
+                                  } else {
+                                    responseStatus(false, value);
+                                  }
+                                  // Navigator.pop(context);
+                                });
                               },
                             ),
                             FlatButton(
@@ -736,7 +837,23 @@ class _StockInTransactionState extends State<StockInTransaction> {
                               },
                             ),
                           ],
-                        ));
+                        )) : Alert(
+                          context: context,
+                          type: AlertType.warning,
+                          title: "No connection!",
+                          desc: "Please connect to the network.",
+                          buttons: [
+                            DialogButton(
+                              child: Text(
+                                "OK",
+                                style:
+                                    TextStyle(color: Colors.white, fontSize: 20),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                              width: 120,
+                            )
+                          ],
+                        ).show();
               } else {
                 return showDialog(
                     context: context,

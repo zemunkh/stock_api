@@ -85,9 +85,14 @@ class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
           ),
         ),
         drawer: MainDrawer(),
-        body: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: StockInDraftEditTransaction(),
+        body: GestureDetector(
+            onTap: (){
+              FocusScope.of(context).requestFocus(new FocusNode());
+            },
+            child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: StockInDraftEditTransaction(),
+          ),
         ),
       ),
     );

@@ -57,7 +57,7 @@ class SettingScreenState extends State<SettingScreen> {
     _deviceController.text = await FileManager.readProfile('device_name_api');
     _ipAddressController.text = await FileManager.readProfile('ip_address');
     _portNumController.text = await FileManager.readProfile('port_number');
-    _companyController.text = await FileManager.readProfile('company_name');
+    _companyController.text = await FileManager.readProfile('stock_company_name');
     _locationController.text = await FileManager.readProfile('location');
     _projectController.text = await FileManager.readProfile('project_code');
     _descriptions = await FileManager.readDescriptions();
@@ -218,7 +218,7 @@ class SettingScreenState extends State<SettingScreen> {
                 FileManager.saveProfile('user_name_api',uname);
                 FileManager.saveProfile('ip_address', ip);
                 FileManager.saveProfile('port_number', port);
-                FileManager.saveProfile('company_name', company);
+                FileManager.saveProfile('stock_company_name', company);
                 FileManager.saveProfile('location', location);
                 FileManager.saveProfile('project_code', project);
               });
