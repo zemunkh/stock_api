@@ -18,6 +18,9 @@ class MyConnectivity {
 
   void initialise() async {
     ConnectivityResult result = await connectivity.checkConnectivity();
+    if(controller.isClosed) {
+
+    }
     _checkStatus(result);
     connectivity.onConnectivityChanged.listen((result) {
       _checkStatus(result);
@@ -38,5 +41,7 @@ class MyConnectivity {
     controller.sink.add({result: isOnline});
   }
 
-  void disposeStream() => controller.close();
+  void disposeStream() {
+    controller.close();
+  }
 }

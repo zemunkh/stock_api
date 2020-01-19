@@ -107,6 +107,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         stockId = row["stockId"];
         //Fetching Unit of Measurements for the Stock.
         var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
+        print('Received UOM data: $data');
         var receivedData = json.decode(data);
         uomList = receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
         print("Length UOMs: ${uomList.length}");
@@ -162,7 +163,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       trueVal = buffer;
 
       if(conStatus) {
-        await Future.delayed(const Duration(milliseconds: 1000), () {
+        await Future.delayed(const Duration(milliseconds: 500), () {
           _stockInputControllers[index].text = trueVal;
         }).then((value) {
           _searchStockCode(index, trueVal);
@@ -178,7 +179,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
           FocusScope.of(context).requestFocus(new FocusNode());
             Scaffold.of(context).showSnackBar(SnackBar(
               content: new Text(
-                "StockCode is not available! Please try again.",
+                "Connection is not available! Please try again.",
                 textAlign: TextAlign.center,
               ),
               duration: const Duration(milliseconds: 2000),
@@ -474,8 +475,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
   @override
   void dispose() {
+    // _connectivity.disposeStream();
     super.dispose();
-    _connectivity.disposeStream();
     for(int i = 0; i < _stockInputControllers.length; i++) {
       _stockInputControllers[i].dispose();
       _lvl1InputControllers[i].dispose();
@@ -489,7 +490,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     setInitials();
     initServerUrl();
 
-    _connectivity.initialise();
+    // _connectivity.initialise();
     _connectivity.myStream.listen((source) {
       setState(() => _source = source);
     });
@@ -896,7 +897,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
           return showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text("Please fill all input fieds"),
+              title: Text("Please fill all input fieds", 
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),                          
+              ),
               actions: <Widget>[
                 FlatButton(
                   child: Text('Okay'),

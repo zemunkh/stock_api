@@ -443,8 +443,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
   @override
   void dispose() {
-    super.dispose();
     _connectivity.disposeStream();
+    super.dispose();
     for(int i = 0; i < _stockInputControllers.length; i++) {
       _stockInputControllers[i].dispose();
       _lvl1InputControllers[i].dispose();
@@ -858,7 +858,12 @@ class _StockInTransactionState extends State<StockInTransaction> {
                 return showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                          title: Text("Please fill all input fieds"),
+                          title: Text("Please fill all input fieds", 
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),                          
+                          ),
                           actions: <Widget>[
                             FlatButton(
                               child: Text('Okay'),
