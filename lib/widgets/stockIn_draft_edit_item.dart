@@ -4,11 +4,9 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
-import 'package:connectivity/connectivity.dart';
 import '../model/uoms.dart';
 import '../screens/home_screen.dart';
 import '../screens/stockIn_draft_screen.dart';
-import '../helper/connection.dart';
 import '../helper/database_helper.dart';
 import '../helper/file_manager.dart';
 import '../helper/api.dart';
@@ -20,8 +18,6 @@ class StockInDraftEditTransaction extends StatefulWidget {
 }
 
 class _StockInDraftEditTransactionState extends State<StockInDraftEditTransaction> {
-  Map _source = {ConnectivityResult.none: false};
-  MyConnectivity _connectivity = MyConnectivity.instance;
 
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
@@ -58,7 +54,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
   List<String> _stockCodeList = [];
   List<String> _stockNameList = [];
 
-  bool conStatus = false;
   
   List<bool> _isUOMEnabledList = [];
   // Dropdown menu variables
@@ -90,11 +85,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
   Future<Null> _searchStockCode(int index, String stockCode) async {
     bool isEmpty = false;
+    bool isNetworkOk = false;
     List<Map> stockData = await dbHelper.queryAllRows();
     final api = Api();
 
     stockData.forEach((row) async {
-      if(row["stockCode"] == stockCode) {
+      if (row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         _stockNames[index] = (row["stockName"]);
         // _lvl1_baseUOM[index] = (row["baseUOM"]);
@@ -108,33 +104,47 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         //Fetching Unit of Measurements for the Stock.
         var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
         print('Received UOM data: $data');
-        var receivedData = json.decode(data);
-        uomList = receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
-        print("Length UOMs: ${uomList.length}");
-        setState(() {
-          if(uomList.length > 1) {
-            if(uomList[0].isBaseUOM == true) {
+        if(data != 'SocketException') {
+          isNetworkOk = true;
+          var receivedData = json.decode(data);
+          uomList =
+              receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
+          print("Length UOMs: ${uomList.length}");
+          setState(() {
+            if (uomList.length > 1) {
+              if (uomList[0].isBaseUOM == true) {
+                _lvl1uomList[index] = uomList[0].uomCode;
+                _lvl2uomList[index] = uomList[1].uomCode;
+              } else if (uomList[1].isBaseUOM == true) {
+                _lvl1uomList[index] = uomList[1].uomCode;
+                _lvl2uomList[index] = uomList[0].uomCode;
+              }
+              _isUOMEnabledList[index] = true;
+              // enable both lvl1 and lvl2 input fields
+            } else {
               _lvl1uomList[index] = uomList[0].uomCode;
-              _lvl2uomList[index] = uomList[1].uomCode;
-            } else if(uomList[1].isBaseUOM == true){
-              _lvl1uomList[index] = uomList[1].uomCode;
-              _lvl2uomList[index] = uomList[0].uomCode;
+              _lvl2uomList[index] = '';
+              // disable lvl2 input field
+              _isUOMEnabledList[index] = false;
             }
-            _isUOMEnabledList[index] = true;
-            // enable both lvl1 and lvl2 input fields
-          } else {
-            _lvl1uomList[index] = uomList[0].uomCode;
-            _lvl2uomList[index] = '';
-            // disable lvl2 input field
-            _isUOMEnabledList[index] = false;
-          }
-        });
+          });
+        } else {
+          isNetworkOk = false;
+          Scaffold.of(context).showSnackBar(SnackBar(
+              content: new Text(
+                "Network is not available! Please check the network.",
+                textAlign: TextAlign.center,
+              ),
+              duration: const Duration(milliseconds: 3000),
+            ),
+          );
+        }
       } else {
         isEmpty = isEmpty || false;
       }
     });
 
-    if(!isEmpty) {
+    if(!isEmpty && isNetworkOk == true) {
       Scaffold.of(context).showSnackBar(SnackBar(
           content: new Text(
             "StockCode is not available! Please try again.",
@@ -144,6 +154,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         ),
       );
     }
+
 
     setState(() {
       _isButtonDisabled = !isEmpty;
@@ -162,32 +173,16 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       buffer = buffer.substring(0, buffer.length - 1);
       trueVal = buffer;
 
-      if(conStatus) {
-        await Future.delayed(const Duration(milliseconds: 500), () {
-          _stockInputControllers[index].text = trueVal;
-        }).then((value) {
-          _searchStockCode(index, trueVal);
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // _stockInputController.clear();
-            _stockInputNodes[index].unfocus();
-            FocusScope.of(context).requestFocus(new FocusNode());
-          });
-        });
-      } else {
-        Future.delayed(const Duration(milliseconds: 2000), () {
-          _stockInputControllers[index].text = trueVal;
+      await Future.delayed(const Duration(milliseconds: 500), () {
+        _stockInputControllers[index].text = trueVal;
+      }).then((value) {
+        _searchStockCode(index, trueVal);
+        Future.delayed(const Duration(milliseconds: 500), () {
+          // _stockInputController.clear();
+          _stockInputNodes[index].unfocus();
           FocusScope.of(context).requestFocus(new FocusNode());
-            Scaffold.of(context).showSnackBar(SnackBar(
-              content: new Text(
-                "Connection is not available! Please try again.",
-                textAlign: TextAlign.center,
-              ),
-              duration: const Duration(milliseconds: 2000),
-            ),
-          );
         });
-        
-      }
+      });
     }
 
   }
@@ -475,7 +470,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
   @override
   void dispose() {
-    // _connectivity.disposeStream();
     super.dispose();
     for(int i = 0; i < _stockInputControllers.length; i++) {
       _stockInputControllers[i].dispose();
@@ -489,27 +483,11 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     super.initState();
     setInitials();
     initServerUrl();
-
-    // _connectivity.initialise();
-    _connectivity.myStream.listen((source) {
-      setState(() => _source = source);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
-
-    switch (_source.keys.toList()[0]) {
-      case ConnectivityResult.none:
-        conStatus = false;
-        break;
-      case ConnectivityResult.mobile:
-        conStatus = true;
-        break;
-      case ConnectivityResult.wifi:
-        conStatus = true;
-    }
 
     Widget responseStatus(bool status, String value) {
       Alert(
@@ -526,7 +504,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             ),
             onPressed: () => status == true ? Navigator.of(context)
               .pushReplacementNamed(
-                  HomeScreen.routeName) : Navigator.of(context).pop(),
+                  StockInDraftScreen.routeName) : Navigator.of(context).pop(),
             width: 120,
           )
         ],
@@ -811,13 +789,13 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         int index = 0;
         _stockInputControllers.forEach((controller) async {
           if (_isUOMEnabledList[index] == false) {
-            if(controller.text != '' && _lvl1InputControllers[index].text != '') {
+            if(_refController.text != '' && controller.text != '' && _lvl1InputControllers[index].text != '') {
               _completed = _completed && true;
             } else {
               _completed = false;
             }
           } else {
-            if(controller.text != ''
+            if(_refController.text != '' && controller.text != ''
               && _lvl1InputControllers[index].text != ''
               && _lvl2InputControllers[index].text != '') {
               _completed = _completed && true;
@@ -829,7 +807,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         });
 
         if(_completed) {
-          return conStatus == true ? showDialog(
+          return showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 title: Text(
@@ -876,23 +854,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                     },
                   ),
                 ],
-              )) : Alert(
-                context: context,
-                type: AlertType.warning,
-                title: "No connection!",
-                desc: "Please connect to the network.",
-                buttons: [
-                  DialogButton(
-                    child: Text(
-                      "OK",
-                      style:
-                          TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                    width: 120,
-                  )
-                ],
-              ).show();
+              ));
         } else {
           return showDialog(
             context: context,

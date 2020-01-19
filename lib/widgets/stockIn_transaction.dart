@@ -4,8 +4,6 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
-import 'package:connectivity/connectivity.dart';
-import '../helper/connection.dart';
 import '../model/stockIn.dart';
 import '../model/uoms.dart';
 import '../helper/api.dart';
@@ -19,8 +17,6 @@ class StockInTransaction extends StatefulWidget {
 }
 
 class _StockInTransactionState extends State<StockInTransaction> {
-  Map _source = {ConnectivityResult.none: false};
-  MyConnectivity _connectivity = MyConnectivity.instance;
 
   final dbHelper = DatabaseHelper.instance;
   bool _isButtonDisabled = true;
@@ -53,8 +49,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
   String buffer = '';
   String trueVal = '';
 
-  bool conStatus = false;
-
   List<bool> _isUOMEnabledList = [false];
   // URL preparation function initialization
   String ip, port, dbCode;
@@ -74,6 +68,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
   Future<Null> _searchStockCode(int index, String stockCode) async {
     bool isEmpty = false;
+    bool isNetworkOk = false;
     List<Map> stockData = await dbHelper.queryAllRows();
     final api = Api();
 
@@ -91,34 +86,48 @@ class _StockInTransactionState extends State<StockInTransaction> {
         stockId = row["stockId"];
         //Fetching Unit of Measurements for the Stock.
         var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
-        var receivedData = json.decode(data);
-        uomList =
-            receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
-        print("Length UOMs: ${uomList.length}");
-        setState(() {
-          if (uomList.length > 1) {
-            if (uomList[0].isBaseUOM == true) {
+        print('Received UOM data: $data');
+        if(data != 'SocketException') {
+          isNetworkOk = true;
+          var receivedData = json.decode(data);
+          uomList =
+              receivedData.map<Uoms>((json) => Uoms.fromJson(json)).toList();
+          print("Length UOMs: ${uomList.length}");
+          setState(() {
+            if (uomList.length > 1) {
+              if (uomList[0].isBaseUOM == true) {
+                _lvl1uomList[index] = uomList[0].uomCode;
+                _lvl2uomList[index] = uomList[1].uomCode;
+              } else if (uomList[1].isBaseUOM == true) {
+                _lvl1uomList[index] = uomList[1].uomCode;
+                _lvl2uomList[index] = uomList[0].uomCode;
+              }
+              _isUOMEnabledList[index] = true;
+              // enable both lvl1 and lvl2 input fields
+            } else {
               _lvl1uomList[index] = uomList[0].uomCode;
-              _lvl2uomList[index] = uomList[1].uomCode;
-            } else if (uomList[1].isBaseUOM == true) {
-              _lvl1uomList[index] = uomList[1].uomCode;
-              _lvl2uomList[index] = uomList[0].uomCode;
+              _lvl2uomList[index] = '';
+              // disable lvl2 input field
+              _isUOMEnabledList[index] = false;
             }
-            _isUOMEnabledList[index] = true;
-            // enable both lvl1 and lvl2 input fields
-          } else {
-            _lvl1uomList[index] = uomList[0].uomCode;
-            _lvl2uomList[index] = '';
-            // disable lvl2 input field
-            _isUOMEnabledList[index] = false;
-          }
-        });
+          });
+        } else {
+          isNetworkOk = false;
+          Scaffold.of(context).showSnackBar(SnackBar(
+              content: new Text(
+                "Network is not available! Please check the network.",
+                textAlign: TextAlign.center,
+              ),
+              duration: const Duration(milliseconds: 3000),
+            ),
+          );
+        }
       } else {
         isEmpty = isEmpty || false;
       }
     });
 
-    if(!isEmpty) {
+    if(!isEmpty && isNetworkOk == true) {
       Scaffold.of(context).showSnackBar(SnackBar(
           content: new Text(
             "StockCode is not available! Please try again.",
@@ -127,7 +136,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
           duration: const Duration(milliseconds: 2000),
         ),
       );
-    }
+    } 
 
     setState(() {
       _isButtonDisabled = !isEmpty;
@@ -145,31 +154,16 @@ class _StockInTransactionState extends State<StockInTransaction> {
       buffer = buffer.substring(0, buffer.length - 1);
       trueVal = buffer;
 
-      if(conStatus) {
-        await Future.delayed(const Duration(milliseconds: 1000), () {
-          _stockInputControllers[index].text = trueVal;
-        }).then((value) {
-          _searchStockCode(index, trueVal);
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // _stockInputController.clear();
-            _stockInputNodes[index].unfocus();
-            FocusScope.of(context).requestFocus(new FocusNode());
-          });
-        });
-      } else {
-        Future.delayed(const Duration(milliseconds: 2000), () {
-          _stockInputControllers[index].text = trueVal;
+      await Future.delayed(const Duration(milliseconds: 1000), () {
+        _stockInputControllers[index].text = trueVal;
+      }).then((value) {
+        _searchStockCode(index, trueVal);
+        Future.delayed(const Duration(milliseconds: 500), () {
+          // _stockInputController.clear();
+          _stockInputNodes[index].unfocus();
           FocusScope.of(context).requestFocus(new FocusNode());
-            Scaffold.of(context).showSnackBar(SnackBar(
-              content: new Text(
-                "StockCode is not available! Please try again.",
-                textAlign: TextAlign.center,
-              ),
-              duration: const Duration(milliseconds: 2000),
-            ),
-          );
         });
-      }
+      });
 
     }
   }
@@ -443,7 +437,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
   @override
   void dispose() {
-    _connectivity.disposeStream();
     super.dispose();
     for(int i = 0; i < _stockInputControllers.length; i++) {
       _stockInputControllers[i].dispose();
@@ -457,27 +450,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
     super.initState();
     setInitials();
     initServerUrl();
-
-    _connectivity.initialise();
-    _connectivity.myStream.listen((source) {
-      setState(() => _source = source);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime createdDate = DateTime.now();
-
-    switch (_source.keys.toList()[0]) {
-      case ConnectivityResult.none:
-        conStatus = false;
-        break;
-      case ConnectivityResult.mobile:
-        conStatus = true;
-        break;
-      case ConnectivityResult.wifi:
-        conStatus = true;
-    }
 
     Widget responseStatus(bool status, String value) {
       Alert(
@@ -782,14 +759,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
               int index = 0;
               _stockInputControllers.forEach((controller) async {
                 if (_isUOMEnabledList[index] == false) {
-                  if (controller.text != '' &&
+                  if (_refController.text != '' && controller.text != '' &&
                       _lvl1InputControllers[index].text != '') {
                     _completed = _completed && true;
                   } else {
                     _completed = false;
                   }
                 } else {
-                  if (controller.text != '' &&
+                  if (_refController.text != '' && controller.text != '' &&
                       _lvl1InputControllers[index].text != '' &&
                       _lvl2InputControllers[index].text != '') {
                     _completed = _completed && true;
@@ -801,7 +778,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               });
 
               if (_completed) {
-                return conStatus == true ? showDialog(
+                return showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                           title: Text(
@@ -837,23 +814,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                               },
                             ),
                           ],
-                        )) : Alert(
-                          context: context,
-                          type: AlertType.warning,
-                          title: "No connection!",
-                          desc: "Please connect to the network.",
-                          buttons: [
-                            DialogButton(
-                              child: Text(
-                                "OK",
-                                style:
-                                    TextStyle(color: Colors.white, fontSize: 20),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(),
-                              width: 120,
-                            )
-                          ],
-                        ).show();
+                        ));
               } else {
                 return showDialog(
                     context: context,

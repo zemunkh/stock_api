@@ -8,14 +8,21 @@ class Api {
   // final _url = 'http://$ip:$port/api/Stocks';
   Future<String> getStocks(String dbCode, String _url) async {
     print("Accessing URL: $_url");
-    http.Response response = await http.get(
-      Uri.encodeFull(_url),
-      headers: {
-        "DbCode": dbCode,
-        "Content-Type": "application/json"
-      },
-    );
-    return response.body;
+    try {
+      http.Response response = await http.get(
+        Uri.encodeFull(_url),
+        headers: {
+          "DbCode": dbCode,
+          "Content-Type": "application/json"
+        },
+      );
+      return response.body;
+    } on SocketException {
+      return 'SocketException';
+    }  finally {
+        _httpClient.close();
+      } 
+
   }
 
   Future<Null> postStockIns(String dbCode, String body, String _url) async {
