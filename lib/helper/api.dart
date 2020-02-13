@@ -12,8 +12,8 @@ class Api {
       http.Response response = await http.get(
         Uri.encodeFull(_url),
         headers: {
-          "DbCode": dbCode,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "DbCode": dbCode
         },
       );
       return response.body;
@@ -25,18 +25,30 @@ class Api {
 
   }
 
-  Future<Null> postStockIns(String dbCode, String body, String _url) async {
+  Future<String> postStockIns(String dbCode, String body, String _url) async {
     // Prepare for the Post request (http)
-    var response = await http.post(
-      _url, 
-      headers: {
-        "Content-Type": "application/json",  
-        "DbCode": dbCode
-      },
-      body: body);
+    String res;
+    try {
+      var response = await http.post(
+        _url, 
+        headers: {
+          "Content-Type": "application/json",  
+          "DbCode": dbCode
+        },
+        body: body
+      );
+      print('API parameters: $dbCode, $_url');
+      print('Response StatusCode: ${response.statusCode}');
+      res = (response.statusCode).toString();
+    } on SocketException {
+      return 'SocketError';
+    } finally {
+      _httpClient.close();
+    } 
     // includes datas into body
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
+    return res;
   }
 
   Future<List> postMultipleStockIns(String dbCode, List<String> body, String _url) async {

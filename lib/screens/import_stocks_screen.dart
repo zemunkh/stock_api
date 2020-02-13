@@ -27,7 +27,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
   Future<Null> initProfileData() async {
     ip =  await FileManager.readProfile('ip_address');
     port =  await FileManager.readProfile('port_number');
-    dbCode =  await FileManager.readProfile('company_name');
+    dbCode =  await FileManager.readProfile('stock_company_name');
     if(ip != '' && port != '' && dbCode != '') {
       _url = 'http://$ip:$port/api/Stocks';
     } else {

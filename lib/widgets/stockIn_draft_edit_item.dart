@@ -119,10 +119,13 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                 _lvl1uomList[index] = uomList[1].uomCode;
                 _lvl2uomList[index] = uomList[0].uomCode;
               }
+              _lvl1InputControllers[index].text = '0';
+              _lvl2InputControllers[index].text = '0';
               _isUOMEnabledList[index] = true;
               // enable both lvl1 and lvl2 input fields
             } else {
               _lvl1uomList[index] = uomList[0].uomCode;
+              _lvl1InputControllers[index].text = '0';
               _lvl2uomList[index] = '';
               // disable lvl2 input field
               _isUOMEnabledList[index] = false;
@@ -219,12 +222,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       _uomValueList2.add(_lvl2InputControllers[i].text);
     }
 
-    for(int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
       Details details1 = Details(
         numbering: null,
         stock: _stockInputControllers[i].text,
         pos: 2,
-        description: dropdownValue.split('. ')[1],
+        description: _stockNames[i],
         price: 0,
         uom: _lvl1uomList[i],
         qty: int.parse(_lvl1InputControllers[i].text),
@@ -239,34 +242,40 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         numbering: null,
         stock: _stockInputControllers[i].text,
         pos: 1,
-        description: dropdownValue.split('. ')[1],
+        description: _stockNames[i],
         price: 0,
-        uom: _lvl2uomList[i],
-        qty: _lvl2InputControllers[i].text == '' ? 0 : int.parse(_lvl2InputControllers[i].text),
+        uom: _lvl2uomList[i], // ??? Questionable
+        qty: _lvl2InputControllers[i].text == ''
+            ? 0
+            : int.parse(_lvl2InputControllers[i].text),
         amount: 1,
         note: null,
         costCentre: null,
         project: projectCode,
         stockLocation: location,
       );
-
-      if (_lvl1InputControllers[i].text != '' && _lvl2InputControllers[i].text != '') {
-        detail = [details1, details2];
-      } else if(_lvl1InputControllers[i].text != '') {
-        detail = [details1];
+      // add stock code data one by one
+      
+      if (_lvl1InputControllers[i].text != '' &&
+          _lvl2InputControllers[i].text != '') {
+            detail.add(details1);
+            detail.add(details2);
+      } else if (_lvl1InputControllers[i].text != '') {
+        detail.add(details1);
       } else {
         print("Empty #$i");
       }
+    }
 
       // With API, it gathers all the data, and make the POST request to the server
       // Have to add multiple post requests.
 
-      StockIn firstData = new StockIn(
+      StockIn data = new StockIn(
         stockInCode: trxNumber,
         stockInDate: DateFormat("yyyy-MM-dd").format(date),
         description: dropdownValue.split('. ')[1],
-        referenceNo: null,
-        title: _stockInputControllers[i].text,
+        referenceNo: '${_refController.text}',
+        title: dropdownValue.split('. ')[1],
         isCancelled: false,
         notes: null,
         costCentre: null,
@@ -275,31 +284,21 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         details: detail,
       );
 
-      var body = jsonEncode(firstData.toJson());
+      var body = jsonEncode(data.toJson());
       print("Object to send: $body");
       print("Other status: $dbCode, ${_url}StockIns");
 
-      _bodyList.add(body);
-    }
 
     String result = '';
-    var resLen = 0;
-    var ctn = 0;
-    await api.postMultipleStockIns(dbCode, _bodyList, '${_url}StockIns').then((resCodeList) {
-      print("Post requests are done!");
-      print("response length: ${resCodeList.length}");
-      resLen = resCodeList.length;
-
-      if(resCodeList[0] == 'SocketError') {
+    await api.postStockIns(dbCode, body, '${_url}StockIns').then((resCode){
+      if(resCode == 'SocketError') {
         result = 'SocketError';
       } else {
-        for(var i = 0; i < resCodeList.length; i++) {
-          if(resCodeList[i] == 200) {
-            ctn++;
-          }
+        if(resCode == '200') {
+          result = '$len/$len';
         }
-        result = '$ctn/$resLen';
       }
+      print("Result: $result");
     });
 
     return result;
@@ -558,7 +557,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '1: ${_lvl1uomList[index]}',
+                    hintText: '${_lvl1uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
@@ -573,8 +572,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   controller: _lvl1Controller,
                   focusNode: _lvl1Node,
                   onTap: () {
-                    _focusNode(context, _lvl1Node);
-                    // _clearTextController(context, _lvl1Controller, _lvl1Node);
+                    // _focusNode(context, _lvl1Node);
+                    _clearTextController(context, _lvl1Controller, _lvl1Node);
                   },
                 ),
               ),
@@ -608,7 +607,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: '2: ${_lvl2uomList[index]}',
+                    hintText: '${_lvl2uomList[index]}',
                     hintStyle: TextStyle(
                       color: Color(0xFF004B83),
                       fontWeight: FontWeight.w200,
@@ -624,8 +623,8 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   controller: _lvl2Controller,
                   focusNode: _lvl2Node,
                   onTap: () {
-                    _focusNode(context, _lvl2Node);
-                    // _clearTextController(context, _lvl2Controller, _lvl2Node);
+                    // _focusNode(context, _lvl2Node);
+                    _clearTextController(context, _lvl2Controller, _lvl2Node);
                   },
                 ),
               ),
@@ -1001,7 +1000,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 16,
               color: Colors.black,
             ),
           ),
@@ -1012,7 +1011,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 16,
               color: Colors.black,
             ),
           ),
