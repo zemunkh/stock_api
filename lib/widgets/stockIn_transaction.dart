@@ -71,6 +71,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     bool isNetworkOk = false;
     List<Map> stockData = await dbHelper.queryAllRows();
     final api = Api();
+    List<String> uoms = [];
 
     stockData.forEach((row) async {
       if (row["stockCode"] == stockCode) {
@@ -95,13 +96,18 @@ class _StockInTransactionState extends State<StockInTransaction> {
           print("Length UOMs: ${uomList.length}");
           setState(() {
             if (uomList.length > 1) {
-              if (uomList[0].isBaseUOM == true) {
-                _lvl1uomList[index] = uomList[0].uomCode;
-                _lvl2uomList[index] = uomList[1].uomCode;
-              } else if (uomList[1].isBaseUOM == true) {
-                _lvl1uomList[index] = uomList[1].uomCode;
-                _lvl2uomList[index] = uomList[0].uomCode;
-              }
+              uomList.forEach((uom) {
+                if(uom.isBaseUOM == true) {
+                  _lvl1uomList[index] = uom.uomCode;
+                  // uomList.remove(uom);
+                } else {
+                  uoms.add(uom.uomCode);
+                }
+              });
+              uoms.sort();
+              _lvl2uomList[index] = uoms[0];
+              print("UOMs after sorted:  $uoms");
+
               _lvl1InputControllers[index].text = '0';
               _lvl2InputControllers[index].text = '0';
               _isUOMEnabledList[index] = true;
