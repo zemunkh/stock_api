@@ -328,7 +328,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     _otherList.add(draftCreatedAt.toString());
     _otherList.add(trxNumber);
-    _otherList.add(dropdownValue);
+    _otherList.add(dropdownValue.split('. ')[0]); // saving index value of dropdown list
     _otherList.add(_refController.text);
 
     int draftIndex = await FileManager.getSelectedIndex();
@@ -416,22 +416,20 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     _lvl2uomList = await FileManager.readDraft('draft_lvl2uomCode_$trxName');
 
     _descripts = await FileManager.readDescriptions();
-    if(_descripts.isEmpty || _descripts == null) {
-      setState(() {
-        dropdownValue = 'Not Selected';
-      });
-      for(int i = 0; i < _descripts.length; i++) {
-        setState(() {
-          // _descriptionControllers[i].text = 'NaN';
-          _descriptions[i] = '#$i. Not Available';
-        });
+
+    int index = 0;
+    if(_otherList[2] != '' || _otherList[2] != null) {
+      index = int.parse(_otherList[2]) - 1;
+      if(index < 0) {
+        index = 0;
       }
     } else {
-      setState(() {
-        dropdownValue = _otherList[2];
-        _descriptions = _descripts;
-      });
+      index = 0;
     }
+    setState(() {
+      dropdownValue = _descripts[index];
+      _descriptions = _descripts;
+    });
 
     // Now Extracting Saved String List values to the fields based on index
     DateTime draftDate = DateTime.parse(_otherList[0]);
@@ -792,13 +790,14 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         int index = 0;
         _stockInputControllers.forEach((controller) async {
           if (_isUOMEnabledList[index] == false) {
-            if(_refController.text != '' && controller.text != '' && _lvl1InputControllers[index].text != '') {
+            if(_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
+              && _lvl1InputControllers[index].text != '') {
               _completed = _completed && true;
             } else {
               _completed = false;
             }
           } else {
-            if(_refController.text != '' && controller.text != ''
+            if(_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
               && _lvl1InputControllers[index].text != ''
               && _lvl2InputControllers[index].text != '') {
               _completed = _completed && true;
@@ -819,7 +818,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                   FlatButton(
                     child: Text('Yes'),
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      // Navigator.of(context).pop();
                       print('Yes clicked');
                       _postTransaction(createdDate).then((value) {
                         print('From show dialog: $value');
@@ -837,7 +836,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                             FileManager.removeDraft('draft_lvl1uomCode_$draftIndex');
                             FileManager.removeDraft('draft_lvl2uomCode_$draftIndex');
                             FileManager.removeFromBank(draftIndex);
-                            Navigator.of(context).pushReplacementNamed(StockInDraftScreen.routeName);
+                            // Navigator.of(context).pushReplacementNamed(StockInDraftScreen.routeName);
 
                           } else {
                             responseStatus(false, value);
@@ -864,7 +863,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             builder: (context) => AlertDialog(
               title: Text("Please fill all input fieds", 
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),                          
               ),

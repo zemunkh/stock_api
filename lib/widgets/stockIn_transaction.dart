@@ -310,9 +310,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     _otherList.add(createdDate.toString());
     _otherList.add(trxNumber);
-    _otherList.add(dropdownValue);
+    // parse dropdown value save the index
+    _otherList.add(dropdownValue.split('. ')[0]);
     _otherList.add(_refController.text);
-
+    print("Other list:  $_otherList");
     // List<String> draftBank = await FileManager.getDraftList();
     // String index = '${draftBank.length}';
     // Set draft index to the save draft list to fetch index of draft.
@@ -406,8 +407,8 @@ class _StockInTransactionState extends State<StockInTransaction> {
     print("Descripts: $_descripts");
 
     setState(() {
-      dropdownValue = _descripts[0];
-      _descriptions = _descripts;
+      dropdownValue = _descripts[0]; // 1. value
+      _descriptions = _descripts; // 
     });
 
     setState(() {
@@ -757,14 +758,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
               int index = 0;
               _stockInputControllers.forEach((controller) async {
                 if (_isUOMEnabledList[index] == false) {
-                  if (_refController.text != '' && controller.text != '' &&
-                      _lvl1InputControllers[index].text != '') {
+                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' && 
+                    _lvl1InputControllers[index].text != '') {
                     _completed = _completed && true;
                   } else {
                     _completed = false;
                   }
                 } else {
-                  if (_refController.text != '' && controller.text != '' &&
+                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
                       _lvl1InputControllers[index].text != '' &&
                       _lvl2InputControllers[index].text != '') {
                     _completed = _completed && true;
@@ -785,7 +786,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                             FlatButton(
                               child: Text('Yes'),
                               onPressed: () {
-                                Navigator.of(context).pop();
+                                // Navigator.of(context).pop();
                                 print('Yes clicked');
                                 _postTransaction(createdDate).then((value) {
                                   print('From show dialog: $value');
@@ -815,24 +816,24 @@ class _StockInTransactionState extends State<StockInTransaction> {
                         ));
               } else {
                 return showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text("Please fill all input fieds", 
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),                          
-                          ),
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text('Okay'),
-                              onPressed: () {
-                                print('Ok clicked');
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        ));
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text("Please fill all input fieds", 
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),                          
+                    ),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text('Okay'),
+                        onPressed: () {
+                          print('Ok clicked');
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ));
               }
             },
       child: Text(

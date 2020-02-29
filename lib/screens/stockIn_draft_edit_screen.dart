@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:flutter/services.dart';
 import 'package:retail_api/widgets/stockIn_draft_edit_item.dart';
 
 import '../widgets/main_drawer.dart';
@@ -32,11 +33,11 @@ class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
         actions: <Widget>[
           FlatButton(
             child: Text('Yes'),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => SystemNavigator.pop(),//Navigator.of(context).pop(true),
           ),
           FlatButton(
             child: Text('No'),
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
         ],
       )
@@ -45,7 +46,6 @@ class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
   
   @override 
   Widget build(BuildContext context) {
-
     return WillPopScope(
       onWillPop: _backButtonPressed,
       child: Scaffold(

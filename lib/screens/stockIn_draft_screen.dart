@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/stockIn_draft_item.dart';
 import '../styles/theme.dart' as Style;
 import '../helper/file_manager.dart';
@@ -25,19 +26,19 @@ class StockInDraftScreenState extends State<StockInDraftScreen> {
     super.initState();
   }
 
-  Future<bool> _backButtonPressed() {
-    return showDialog(
+  Future<bool> _backButtonPressed() async {
+    return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Exit the Stock App?"),
         actions: <Widget>[
           FlatButton(
             child: Text('Yes'),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => SystemNavigator.pop(),
           ),
           FlatButton(
             child: Text('No'),
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
         ],
       )

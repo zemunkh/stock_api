@@ -68,23 +68,15 @@ class SettingScreenState extends State<SettingScreen> {
         _descriptionFocusNodes.add(new FocusNode());
       });
     }
-    if(_descriptions.isEmpty || _descriptions == null) {
-      for(int i = 0; i < _descriptionControllers.length; i++) {
-        setState(() {
+    for(int i = 0; i < _descriptionControllers.length; i++) {
+      setState(() {
+        if(_descriptions[i] != '') {
+          parsed = _descriptions[i].split('. ');
+          _descriptionControllers[i].text = parsed[1];
+        } else {
           _descriptionControllers[i].text = 'Unknown';
-        });
-      }
-    } else {
-      for(int i = 0; i < _descriptionControllers.length; i++) {
-        setState(() {
-          if(_descriptions[i] != '') {
-            parsed = _descriptions[i].split('. ');
-            _descriptionControllers[i].text = parsed[1];
-          } else {
-            _descriptionControllers[i].text = 'Unknown';
-          }
-        });
-      }
+        }
+      });
     }
     // Initializing 8 types of description input models
   }
@@ -231,7 +223,7 @@ class SettingScreenState extends State<SettingScreen> {
                 } else {
                   _descripts.add('$i. Unknown');
                 }
-                print('HOho: ${dController.text}');
+                print('Dropdown Value #$i: ${dController.text}');
               }
               FileManager.setDescriptionList(_descripts).then((_){
                 _scaffoldKey.currentState.showSnackBar(SnackBar(

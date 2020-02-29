@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../helper/file_manager.dart';
 import '../helper/database_helper.dart';
 import '../helper/api.dart';
@@ -116,7 +117,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
         actions: <Widget>[
           FlatButton(
             child: Text('Yes'),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => SystemNavigator.pop(),
           ),
           FlatButton(
             child: Text('No'),

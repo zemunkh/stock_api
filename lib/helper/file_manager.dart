@@ -47,7 +47,7 @@ class FileManager {
     List<String> descripts = prefs.getStringList('stock_descriptions');
     print('Descriptions List: $descripts');
     if(descripts == null) {
-      descripts = ['1. Empty', '2. Empty', '3. Empty', '4. Empty', '5. Empty', '6. Empty', '7. Empty', '8. Empty'];
+      descripts = ['1. ', '2. ', '3. ', '4. ', '5. ', '6. ', '7. ', '8. '];
       return descripts;
     } else {
       return descripts;
