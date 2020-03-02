@@ -90,11 +90,11 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     final api = Api();
     List<String> uoms = [];
 
-    stockData.forEach((row) async {
+    var currentStock = stockData.where((row) => row["stockCode"] == stockCode);
+    currentStock.forEach((row) async {
       if (row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         _stockNames[index] = (row["stockName"]);
-        // _lvl1_baseUOM[index] = (row["baseUOM"]);
 
         isEmpty = isEmpty || true;
         print('I got this :)');
@@ -704,11 +704,13 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       );
     }
 
-    final referenceInput = Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Container(
-        height: 40,
+    final referenceInput = Container(
+      height: 30,
+      width: 150,
+      child: Center(
         child: TextFormField(
+          textAlignVertical: TextAlignVertical.bottom,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
             color: Color(0xFF004B83),
@@ -724,19 +726,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5.0),
-            ),
-            errorStyle: TextStyle(
-              color: Colors.yellowAccent,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                EvaIcons.close,
-                color: Colors.blueAccent,
-                size: 20,
-              ),
-              onPressed: () {
-                _clearTextController(context, _refController, _refNode);
-              },
             ),
           ),
           autofocus: false,
@@ -771,12 +760,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         child: Icon(
           EvaIcons.plusCircleOutline,
           color: Colors.blueGrey,
-          size: 40,
+          size: 30,
         ),
         // shape: StadiumBorder(),
         // color: Colors.lightBlue[600],
         splashColor: Colors.teal,
-        height: 40,
+        height: 30,
         // minWidth: MediaQuery.of(context).size.width / 2,
         elevation: 2,
       ),
@@ -892,7 +881,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       shape: StadiumBorder(),
       color: Colors.teal[300],
       splashColor: Colors.green[50],
-      height: 30,
+      height: 25,
       minWidth: 130,
       elevation: 2,
     );
@@ -925,7 +914,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                                   TextStyle(color: Colors.white, fontSize: 20),
                             ),
                             onPressed: () => Navigator.of(context)
-                                .pushReplacementNamed(HomeScreen.routeName),
+                                .pushReplacementNamed(StockInDraftScreen.routeName),
                             width: 120,
                           )
                         ],
@@ -955,13 +944,13 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
         shape: StadiumBorder(),
         color: Colors.orange[800],
         splashColor: Colors.yellow[200],
-        height: 30,
+        height: 25,
         minWidth: 130,
         elevation: 2,
       );
     }
 
-    Widget _descriptionMenu(BuildContext context, String header) {
+    Widget _descriptionMenu(BuildContext context) {
       return Padding(
         padding: const EdgeInsets.only(right: 6.0, left: 6.0),
         child: Container(
@@ -1003,18 +992,17 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.black,
             ),
           ),
-          SizedBox(height:10,),
           Text(
             '$trxNumber',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.black,
             ),
           ),
@@ -1025,33 +1013,52 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
 
     final transaction =  <Widget>[
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Expanded(
-              flex: 5,
+            Flexible(
+              fit: FlexFit.tight,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   statusBar(statusTime),
-                  SizedBox(height: 10,),
                   referenceInput,
+                  _descriptionMenu(context),
                 ],
               ),
             ),
-            Expanded(
-              flex: 5,
+            Flexible(
+            flex: 1,
+            fit: FlexFit.tight,
               child: Column(
-                // mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  addStockInputButton,
-                  _saveDraftButton(context),
-                  postButton,
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: postButton,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: _saveDraftButton(context),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: addStockInputButton,
+                    ),
+                  ),                        
                 ],
               ),
-            )
+            ),
           ],
         ),
-        _descriptionMenu(context, 'Descriptions:'),
         new Divider(
           height: 5.0,
           color: Colors.black87,

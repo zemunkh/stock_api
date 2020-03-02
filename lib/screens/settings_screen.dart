@@ -334,7 +334,7 @@ class SettingScreenState extends State<SettingScreen> {
         _mainInput('Username', 'Username', _usernameController, _usernameNode),
         _mainInput('IP address', 'default is qne.cloud', _ipAddressController, _ipNode),
         _mainInput('Port Num', 'Port number', _portNumController, _portNode),
-        _mainInput('Company', 'dbCode', _companyController, _compNode),
+        _mainInput('DbCode', 'dbCode', _companyController, _compNode),
         _mainInput('Location', 'default is HQ', _locationController, _locNode),
         _mainInput('Project',  'default is Serdang', _projectController, _projNode),
         SizedBox(height: 15,),

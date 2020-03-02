@@ -73,20 +73,20 @@ class _StockInTransactionState extends State<StockInTransaction> {
     final api = Api();
     List<String> uoms = [];
 
-    stockData.forEach((row) async {
+    var currentStock = stockData.where((row) => row["stockCode"] == stockCode);
+    currentStock.forEach((row) async {
       if (row["stockCode"] == stockCode) {
         print('ID: ${row["id"]}');
         _stockNames[index] = (row["stockName"]);
-        // _lvl1_baseUOM[index] = (row["baseUOM"]);
 
         isEmpty = isEmpty || true;
         print('I got this :)');
-        // _lvl1InputControllers[index].text = row["baseUOM"];
 
         // this will build baseUOM lvl1, lvl2 widgets
         stockId = row["stockId"];
         //Fetching Unit of Measurements for the Stock.
         var data = await api.getStocks(dbCode, '${_url}Stocks/$stockId/UOMS');
+        //fetch uoms through pre-downloaded UOMs list
         print('Received UOM data: $data');
         if(data != 'SocketException') {
           isNetworkOk = true;
@@ -145,7 +145,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
           duration: const Duration(milliseconds: 2000),
         ),
       );
-    } 
+    }
 
     setState(() {
       _isButtonDisabled = !isEmpty;
@@ -242,7 +242,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
         stockLocation: location,
       );
       // add stock code data one by one
-      
+
       if (_lvl1InputControllers[i].text != '' &&
           _lvl2InputControllers[i].text != '') {
             detail.add(details1);
@@ -289,7 +289,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     });
 
     return result;
-    
+
   }
 
   Future<Null> _saveTheDraft(DateTime createdDate) async {
@@ -408,7 +408,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     setState(() {
       dropdownValue = _descripts[0]; // 1. value
-      _descriptions = _descripts; // 
+      _descriptions = _descripts; //
     });
 
     setState(() {
@@ -470,8 +470,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                   TextStyle(color: Colors.white, fontSize: 20),
             ),
             onPressed: () => status == true ? Navigator.of(context)
-              .pushReplacementNamed(
-                  HomeScreen.routeName) : Navigator.of(context).pop(),
+              .pushReplacementNamed(HomeScreen.routeName) : Navigator.of(context).pop(),
             width: 120,
           )
         ],
@@ -669,11 +668,13 @@ class _StockInTransactionState extends State<StockInTransaction> {
       );
     }
 
-    final referenceInput = Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Container(
-        height: 40,
+    final referenceInput = Container(
+      height: 30,
+      width: 150,
+      child: Center(
         child: TextFormField(
+          textAlignVertical: TextAlignVertical.bottom,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
             color: Color(0xFF004B83),
@@ -689,19 +690,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5.0),
-            ),
-            errorStyle: TextStyle(
-              color: Colors.yellowAccent,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                EvaIcons.close,
-                color: Colors.blueAccent,
-                size: 20,
-              ),
-              onPressed: () {
-                _clearTextController(context, _refController, _refNode);
-              },
             ),
           ),
           autofocus: false,
@@ -737,12 +725,12 @@ class _StockInTransactionState extends State<StockInTransaction> {
         child: Icon(
           EvaIcons.plusCircleOutline,
           color: Colors.blueGrey,
-          size: 40,
+          size: 30,
         ),
         // shape: StadiumBorder(),
         // color: Colors.lightBlue[600],
         splashColor: Colors.teal,
-        height: 40,
+        height: 30,
         // minWidth: MediaQuery.of(context).size.width / 2,
         elevation: 2,
       ),
@@ -758,7 +746,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               int index = 0;
               _stockInputControllers.forEach((controller) async {
                 if (_isUOMEnabledList[index] == false) {
-                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' && 
+                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
                     _lvl1InputControllers[index].text != '') {
                     _completed = _completed && true;
                   } else {
@@ -818,11 +806,11 @@ class _StockInTransactionState extends State<StockInTransaction> {
                 return showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text("Please fill all input fieds", 
+                    title: Text("Please fill all input fieds",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                      ),                          
+                      ),
                     ),
                     actions: <Widget>[
                       FlatButton(
@@ -837,7 +825,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
               }
             },
       child: Text(
-        'Complete',
+        'Complete Trx',
         style: TextStyle(
           color: Colors.white,
           fontFamily: 'QuickSand',
@@ -848,7 +836,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
       shape: StadiumBorder(),
       color: Colors.teal[300],
       splashColor: Colors.green[50],
-      height: 30,
+      height: 25,
       minWidth: 130,
       elevation: 2,
     );
@@ -911,13 +899,13 @@ class _StockInTransactionState extends State<StockInTransaction> {
         shape: StadiumBorder(),
         color: Colors.orange[800],
         splashColor: Colors.yellow[200],
-        height: 30,
+        height: 25,
         minWidth: 130,
         elevation: 2,
       );
     }
 
-    Widget _descriptionMenu(BuildContext context, String header) {
+    Widget _descriptionMenu(BuildContext context) {
       return Padding(
         padding: const EdgeInsets.only(right: 6.0, left: 6.0),
         child: Container(
@@ -951,7 +939,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
 
     Widget statusBar(String time) {
       return Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           Text(
             '$time',
@@ -959,18 +947,17 @@ class _StockInTransactionState extends State<StockInTransaction> {
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.black,
             ),
           ),
-          SizedBox(height:10,),
           Text(
             '$trxNumber',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'QuickSand',
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.black,
             ),
           ),
@@ -978,72 +965,102 @@ class _StockInTransactionState extends State<StockInTransaction> {
       );
     }
 
+    final button1 = FlatButton(
+      onPressed: null,
+      child: Text("Completed"),
+    );
+    final button2 = FlatButton(
+      onPressed: null,
+      child: Text("Save draft"),
+    );
+
     final transaction =  <Widget>[
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Expanded(
-              flex: 5,
+            Flexible(
+              flex: 1,
+              fit: FlexFit.tight,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   statusBar(DateFormat("dd/MM/yyyy HH:mm").format(createdDate)),
-                  SizedBox(height: 10,),
                   referenceInput,
+                  _descriptionMenu(context),
                 ],
               ),
             ),
-            Expanded(
-              flex: 5,
+            Flexible(
+            flex: 1,
+            fit: FlexFit.tight,
               child: Column(
-                // mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  addStockInputButton,
-                  _saveDraftButton(context),
-                  postButton,
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: postButton,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: _saveDraftButton(context),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: addStockInputButton,
+                    ),
+                  ),                        
                 ],
               ),
-            )
+            ),
           ],
         ),
-        _descriptionMenu(context, 'Descriptions:'),
         new Divider(
           height: 5.0,
           color: Colors.black87,
         ),
         Expanded(
           child: ListView.builder(
-              itemCount: _stockInputControllers?.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  padding: const EdgeInsets.all(4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      _stockInput(index, _stockInputControllers[index],
-                          _stockInputNodes[index]),
-                      Text('${_stockNames[index]}'),
-                      _stockMeasurement(
-                          index,
-                          _lvl1InputControllers[index],
-                          _lvl2InputControllers[index],
-                          _lvl1InputNodes[index],
-                          _lvl2InputNodes[index]),
-                      new Divider(
-                        height: 15.0,
-                        color: Colors.black87,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            itemCount: _stockInputControllers?.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                padding: const EdgeInsets.all(4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    _stockInput(index, _stockInputControllers[index],
+                        _stockInputNodes[index]),
+                    Text('${_stockNames[index]}'),
+                    _stockMeasurement(
+                        index,
+                        _lvl1InputControllers[index],
+                        _lvl2InputControllers[index],
+                        _lvl1InputNodes[index],
+                        _lvl2InputNodes[index]),
+                    new Divider(
+                      height: 10.0,
+                      color: Colors.black87,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ];
 
     return Column(
       // shrinkWrap: true,
       // padding: const EdgeInsets.only(left: 2, right: 2),
+      // mainAxisAlignment: MainAxisAlignment.start,
       children: transaction
     );
   }

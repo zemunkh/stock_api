@@ -177,6 +177,7 @@ class ImportStocksScreenState extends State<ImportStocksScreen> {
                   ),
                 );     
             }
+            return null;
           },
         ),
       ),

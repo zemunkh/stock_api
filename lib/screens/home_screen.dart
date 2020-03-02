@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
               FocusScope.of(context).requestFocus(new FocusNode());
             },
             child: Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: EdgeInsets.only(left: 8.0, right: 8.0),
             child: StockInTransaction(),
           ),
         ),

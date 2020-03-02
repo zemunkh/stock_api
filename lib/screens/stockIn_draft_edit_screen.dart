@@ -90,7 +90,7 @@ class _StockInDraftEditScreenState extends State<StockInDraftEditScreen> {
               FocusScope.of(context).requestFocus(new FocusNode());
             },
             child: Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.only(left: 8.0, right: 8.0),
             child: StockInDraftEditTransaction(),
           ),
         ),
