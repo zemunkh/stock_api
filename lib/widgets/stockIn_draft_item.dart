@@ -19,13 +19,13 @@ class StockInDraftItem extends StatelessWidget {
         title: Text(
           "Are you sure to delete #${index + 1}?",
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: <Widget>[
           FlatButton(
-            child: Text('Yes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF004B83),),),
+            child: Text('Yes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004B83),),),
             onPressed: () {
               FileManager.removeDraft('draft_other_$draftName');
               FileManager.removeDraft('draft_stockCode_$draftName');
@@ -40,7 +40,7 @@ class StockInDraftItem extends StatelessWidget {
             },
           ),
           FlatButton(
-            child: Text('No', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF004B83),)),
+            child: Text('No', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004B83),)),
             onPressed: () {
               Navigator.pop(context);
             },

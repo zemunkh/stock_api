@@ -309,7 +309,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
     }
 
     _otherList.add(createdDate.toString());
-    _otherList.add(trxNumber);
+    _otherList.add(trxNumber.split('-')[1]);
     // parse dropdown value save the index
     _otherList.add(dropdownValue.split('. ')[0]);
     _otherList.add(_refController.text);
@@ -392,11 +392,15 @@ class _StockInTransactionState extends State<StockInTransaction> {
     projectCode = await FileManager.readProfile('stock_company_name');
     location = await FileManager.readProfile('location');
     // Comparing the new trx number and old trx number for renewal
+    String devName = await FileManager.readProfile("device_name_api");
+    if(devName == '') {
+      devName = '*';
+    }
     String savedTrxDate = await FileManager.getTrxDate();
     int numbering = await FileManager.getTrxNumbering();
     if (cdate == savedTrxDate) {
-      FileManager.setTrxNumbering(numbering + 1);
-      ++numbering;
+      // FileManager.setTrxNumbering(numbering + 1);
+      // ++numbering;
     } else {
       FileManager.setTrxNumbering(1);
       numbering = 1;
@@ -414,12 +418,14 @@ class _StockInTransactionState extends State<StockInTransaction> {
     setState(() {
       if (numbering < 10) {
         trxNumber =
-            'SIN${DateFormat("yyMMdd").format(currentDate)}/00$numbering';
+            '$devName-SIN${DateFormat("yyMMdd").format(currentDate)}/00$numbering';
       } else if (numbering < 100 && numbering >= 10) {
         trxNumber =
-            'SIN${DateFormat("yyMMdd").format(currentDate)}/0$numbering';
+            '$devName-SIN${DateFormat("yyMMdd").format(currentDate)}/0$numbering';
+      } else if(numbering > 99 && numbering < 999) {
+        trxNumber = '$devName-SIN${DateFormat("yyMMdd").format(currentDate)}/$numbering';
       } else {
-        trxNumber = 'SIN${DateFormat("yyMMdd").format(currentDate)}/$numbering';
+        trxNumber = 'EXCEEDS LIMIT!';
       }
 
       _lvl1uomList.add('Unit');
@@ -742,18 +748,19 @@ class _StockInTransactionState extends State<StockInTransaction> {
           : () {
               // gather all the information and post data to db by api lib.
               /// Check process and post Transaction
+              String pattern = trxNumber.split('-')[0];
               bool _completed = true;
               int index = 0;
               _stockInputControllers.forEach((controller) async {
                 if (_isUOMEnabledList[index] == false) {
-                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
+                  if (pattern != '*' && _refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
                     _lvl1InputControllers[index].text != '') {
                     _completed = _completed && true;
                   } else {
                     _completed = false;
                   }
                 } else {
-                  if (_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
+                  if (pattern != '*' && _refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != '' &&
                       _lvl1InputControllers[index].text != '' &&
                       _lvl2InputControllers[index].text != '') {
                     _completed = _completed && true;
@@ -776,9 +783,12 @@ class _StockInTransactionState extends State<StockInTransaction> {
                               onPressed: () {
                                 // Navigator.of(context).pop();
                                 print('Yes clicked');
-                                _postTransaction(createdDate).then((value) {
+                                _postTransaction(createdDate).then((value) async {
                                   print('From show dialog: $value');
                                   if(value != null && value != '' && value != 'SocketError') {
+                                    // trx number ascending after post method's trx is used
+                                    int n = await FileManager.getTrxNumbering();
+                                    FileManager.setTrxNumbering(n + 1);
                                     var res = value.split('/')[0];
                                     var len = value.split('/')[1];
                                     if(res == len) {
@@ -806,7 +816,7 @@ class _StockInTransactionState extends State<StockInTransaction> {
                 return showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text("Please fill all input fieds",
+                    title: Text("Please fill all input fields or device parameters",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -816,7 +826,6 @@ class _StockInTransactionState extends State<StockInTransaction> {
                       FlatButton(
                         child: Text('Okay'),
                         onPressed: () {
-                          print('Ok clicked');
                           Navigator.of(context).pop();
                         },
                       ),
@@ -855,7 +864,10 @@ class _StockInTransactionState extends State<StockInTransaction> {
                       child: Text('Yes'),
                       onPressed: () {
                         print('You pressed Draft Button!');
-                        _saveTheDraft(createdDate).then((_) {
+                        _saveTheDraft(createdDate).then((_) async {
+                          // trx number ascending after draft's trx is used
+                          int n = await FileManager.getTrxNumbering();
+                          FileManager.setTrxNumbering(n + 1);
                           Alert(
                             context: context,
                             type: AlertType.success,

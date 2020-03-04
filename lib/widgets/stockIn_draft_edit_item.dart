@@ -414,8 +414,12 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     _uomValueList2 = await FileManager.readDraft('draft_lvl2uom_$trxName');
     _lvl1uomList = await FileManager.readDraft('draft_lvl1uomCode_$trxName');
     _lvl2uomList = await FileManager.readDraft('draft_lvl2uomCode_$trxName');
-
     _descripts = await FileManager.readDescriptions();
+
+    String devName = await FileManager.readProfile("device_name_api");
+    if(devName == '') {
+      devName = '*';
+    }
 
     int index = 0;
     if(_otherList[2] != '' || _otherList[2] != null) {
@@ -437,7 +441,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
     setState(() {
       draftCreatedAt = draftDate;
       statusTime = DateFormat("yyyy/MM/dd HH:mm:ss").format(draftDate);
-      trxNumber = _otherList[1];
+      trxNumber = '$devName-${_otherList[1]}';
       _refController.text = _otherList[3];
       for(int i = 0; i < _stockCodeList.length; i++) {
         print('Adding!');
@@ -775,18 +779,19 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
       onPressed: _isButtonDisabled ? null : () {
         // gather all the information and post data to db by api lib.
         /// Check process and post Transaction
+        String pattern = trxNumber.split('-')[0];
         bool _completed = true;
         int index = 0;
         _stockInputControllers.forEach((controller) async {
           if (_isUOMEnabledList[index] == false) {
-            if(_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
+            if(pattern != '*' && _refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
               && _lvl1InputControllers[index].text != '') {
               _completed = _completed && true;
             } else {
               _completed = false;
             }
           } else {
-            if(_refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
+            if(pattern != '*' && _refController.text != '' && controller.text != '' && dropdownValue.split('. ')[1] != ''
               && _lvl1InputControllers[index].text != ''
               && _lvl2InputControllers[index].text != '') {
               _completed = _completed && true;
@@ -850,7 +855,7 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
           return showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text("Please fill all input fieds", 
+              title: Text("Please fill all input fields or device parameters", 
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -860,7 +865,6 @@ class _StockInDraftEditTransactionState extends State<StockInDraftEditTransactio
                 FlatButton(
                   child: Text('Okay'),
                   onPressed: () {
-                    print('Ok clicked');
                     Navigator.of(context).pop();
                   },
                 ),
